@@ -3,26 +3,36 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { getOrCreateUser } from '@/lib/queries';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Supabase automatically parses the hash fragment and sets the session
     const handleAuthCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Wait for Supabase to parse the hash/code and set the session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const finalize = async (s: typeof session) => {
+        if (s?.user) {
+          try {
+            await getOrCreateUser(s.user);
+          } catch (e) {
+            // User may already exist, that's fine
+          }
+          router.replace('/feed');
+        } else {
+          router.replace('/login');
+        }
+      };
 
       if (session) {
-        router.replace('/feed');
+        await finalize(session);
       } else {
-        // Give Supabase a moment to process the hash tokens
+        // Give Supabase a moment to process the tokens from URL hash
         setTimeout(async () => {
           const { data: { session: retrySession } } = await supabase.auth.getSession();
-          if (retrySession) {
-            router.replace('/feed');
-          } else {
-            router.replace('/login');
-          }
+          await finalize(retrySession);
         }, 1500);
       }
     };
