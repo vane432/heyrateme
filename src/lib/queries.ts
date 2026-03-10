@@ -78,7 +78,7 @@ export async function getPostById(postId: string, userId?: string) {
 
   // Check if user has already rated
   const userRating = userId
-    ? ratings?.find(r => r.user_id === userId)?.rating
+    ? ratings?.find((r: any) => r.user_id === userId)?.rating
     : undefined;
 
   return {
