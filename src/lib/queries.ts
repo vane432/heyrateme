@@ -82,7 +82,7 @@ export async function getPostById(postId: string, userId?: string) {
     : undefined;
 
   return {
-    ...post,
+    ...(post as any),
     users: post.users,
     average_rating: averageRating,
     rating_count: ratingCount,
