@@ -25,7 +25,7 @@ export async function getFeedPosts(category?: string) {
 
   // Get ratings for all posts
   const postsWithRatings = await Promise.all(
-    (posts || []).map(async (post) => {
+    (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
         .select('rating, user_id')
@@ -117,7 +117,7 @@ export async function getPostsByUsername(username: string) {
 
   // Get ratings for all posts
   const postsWithRatings = await Promise.all(
-    (posts || []).map(async (post) => {
+    (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
         .select('rating')
@@ -186,7 +186,7 @@ export async function getTopPosts() {
 
   // Get ratings and calculate scores
   const postsWithScores = await Promise.all(
-    (posts || []).map(async (post) => {
+    (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
         .select('rating')
