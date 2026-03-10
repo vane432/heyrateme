@@ -12,7 +12,7 @@ interface UploadPostProps {
 
 export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
   const [caption, setCaption] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
