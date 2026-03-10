@@ -33,7 +33,7 @@ export async function getFeedPosts(category?: string) {
 
       const ratingCount = ratings?.length || 0;
       const averageRating = ratingCount > 0
-        ? ratings!.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+        ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
       return {
@@ -73,7 +73,7 @@ export async function getPostById(postId: string, userId?: string) {
 
   const ratingCount = ratings?.length || 0;
   const averageRating = ratingCount > 0
-    ? ratings!.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+    ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
     : 0;
 
   // Check if user has already rated
@@ -125,7 +125,7 @@ export async function getPostsByUsername(username: string) {
 
       const ratingCount = ratings?.length || 0;
       const averageRating = ratingCount > 0
-        ? ratings!.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+        ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
       return {
@@ -194,7 +194,7 @@ export async function getTopPosts() {
 
       const ratingCount = ratings?.length || 0;
       const averageRating = ratingCount > 0
-        ? ratings!.reduce((sum, r) => sum + r.rating, 0) / ratingCount
+        ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
       // Score algorithm: average_rating * log(number_of_ratings)
