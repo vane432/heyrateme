@@ -54,7 +54,7 @@ export default function LandingNavbar() {
 
             {user && profile ? (
               <div className="flex items-center gap-4">
-                <Link href="/feed" className="text-gray-700 hover:text-gray-900 transition font-medium">Feed</Link>
+                <Link href="/" className="text-gray-700 hover:text-gray-900 transition font-medium">Feed</Link>
                 <Link href={`/profile/${profile.username}`} className="flex items-center gap-2 group">
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 border-2 border-transparent group-hover:border-purple-500 transition">
                     {profile.avatar_url ? (
@@ -98,7 +98,7 @@ export default function LandingNavbar() {
             <a href="#top-posts" className="block text-gray-700 hover:text-gray-900" onClick={() => setIsOpen(false)}>Top Posts</a>
             {user && profile ? (
               <>
-                <Link href="/feed" className="block text-gray-700 hover:text-gray-900">Feed</Link>
+                <Link href="/" className="block text-gray-700 hover:text-gray-900">Feed</Link>
                 <Link href={`/profile/${profile.username}`} className="block text-gray-700 hover:text-gray-900">@{profile.username}</Link>
                 <button onClick={handleSignOut} className="block text-gray-500 hover:text-gray-900 w-full text-left">Sign out</button>
               </>

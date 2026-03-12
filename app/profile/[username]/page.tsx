@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const router = useRouter();
   const params = useParams();
@@ -25,37 +26,58 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const init = async () => {
-      // Load profile publicly — no auth required, never redirects to login
-      // Retry up to 5 times to handle the race condition where a brand-new user
-      // was just created by the auth callback and the DB row may not be visible yet.
+      // Load profile publicly — no auth required
       let data = null;
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
           data = await getUserProfile(username);
-          break; // success — stop retrying
+          break;
         } catch {
-          if (attempt < 4) {
-            await new Promise(r => setTimeout(r, 1000));
-          }
+          if (attempt < 4) await new Promise(r => setTimeout(r, 1000));
         }
       }
       setProfile(data);
       setLoading(false);
 
-      // Check auth state in background — completely non-blocking
-      supabase.auth.getUser().then(async ({ data: { user } }) => {
-        if (!user) return;
-        setCurrentUser(user);
-        const { data: own } = await supabase
-          .from('users')
-          .select('username, avatar_url')
-          .eq('id', user.id)
-          .single();
-        setCurrentUserProfile(own);
-      });
+      if (!data) return;
+
+      // Check auth state in background
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setCurrentUser(user);
+
+      const { data: own } = await supabase
+        .from('users')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .single();
+      setCurrentUserProfile(own);
+
+      // Load follow stats
+      try {
+        const res = await fetch(`/api/follow?user_id=${data.user.id}&current_user_id=${user.id}`);
+        const stats = await res.json();
+        setFollowersCount(stats.followers ?? 0);
+        setFollowingCount(stats.following ?? 0);
+        setIsFollowing(stats.is_following ?? false);
+      } catch {
+        // Follow stats unavailable — table may not exist yet
+      }
     };
     init();
   }, [username]);
+
+  // Also load follow stats for non-logged-in visitors
+  useEffect(() => {
+    if (!profile || currentUser) return;
+    fetch(`/api/follow?user_id=${profile.user.id}`)
+      .then(r => r.json())
+      .then(stats => {
+        setFollowersCount(stats.followers ?? 0);
+        setFollowingCount(stats.following ?? 0);
+      })
+      .catch(() => {});
+  }, [profile, currentUser]);
 
   const isOwnProfile = currentUserProfile?.username === username;
 
@@ -65,10 +87,47 @@ export default function ProfilePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFollow = () => {
+  const handleFollow = async () => {
     if (!currentUser) { router.push('/login'); return; }
-    setIsFollowing(f => !f);
-    setFollowersCount(c => isFollowing ? c - 1 : c + 1);
+    if (followLoading || !profile) return;
+    setFollowLoading(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    try {
+      if (isFollowing) {
+        // Unfollow
+        await fetch('/api/follow', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            follower_id: currentUser.id,
+            following_id: profile.user.id,
+            access_token: token,
+          }),
+        });
+        setIsFollowing(false);
+        setFollowersCount(c => Math.max(0, c - 1));
+      } else {
+        // Follow
+        await fetch('/api/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            follower_id: currentUser.id,
+            following_id: profile.user.id,
+            access_token: token,
+          }),
+        });
+        setIsFollowing(true);
+        setFollowersCount(c => c + 1);
+      }
+    } catch (err) {
+      console.error('Follow error:', err);
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   /* ── Loading skeleton ── */
@@ -223,7 +282,7 @@ export default function ProfilePage() {
                   >
                     {isFollowing ? '✓ Following' : 'Follow'}
                   </button>
-                  <Link href={currentUser ? '/feed' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
+                  <Link href={currentUser ? '/' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
                     Rate
                   </Link>
                 </>
@@ -454,7 +513,7 @@ export default function ProfilePage() {
 
       {/* ─── Guest CTA banner (only for non-logged-in visitors) ─── */}
       {!currentUser && profile.posts.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 px-4">
+        <div className="fixed bottom-0 left-0 right-0 z-20 px-4">
           <div className="max-w-sm mx-auto mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4">
             <div className="flex-1">
               <p className="text-sm font-bold text-gray-900">Join HeyRateMe</p>

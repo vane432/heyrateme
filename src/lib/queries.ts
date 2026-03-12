@@ -274,13 +274,53 @@ export async function submitRating(
 }
 
 // Upload image to Supabase storage
+// Convert image file to WebP format using Canvas API
+async function convertToWebP(file: File, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      // Cap dimensions at 1920px while keeping aspect ratio
+      let { width, height } = img;
+      const MAX = 1920;
+      if (width > MAX || height > MAX) {
+        const ratio = Math.min(MAX / width, MAX / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('WebP conversion failed')),
+        'image/webp',
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export async function uploadImage(file: File, userId: string) {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+  // Convert to WebP for smaller file sizes with high quality
+  let uploadBlob: Blob = file;
+  let ext = file.name.split('.').pop() || 'jpg';
+  try {
+    uploadBlob = await convertToWebP(file);
+    ext = 'webp';
+  } catch {
+    // Fallback: upload original if conversion fails (e.g. SSR)
+  }
+
+  const fileName = `${userId}/${Date.now()}.${ext}`;
 
   const { data, error } = await supabase.storage
     .from('posts')
-    .upload(fileName, file);
+    .upload(fileName, uploadBlob, {
+      contentType: ext === 'webp' ? 'image/webp' : file.type,
+    });
 
   if (error) throw error;
 

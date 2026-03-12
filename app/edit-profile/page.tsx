@@ -62,6 +62,32 @@ export default function EditProfilePage() {
     init();
   }, [router]);
 
+  const convertToWebP = (file: File, quality = 0.85): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const MAX = 512; // avatars don't need to be huge
+        if (width > MAX || height > MAX) {
+          const ratio = Math.min(MAX / width, MAX / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('WebP conversion failed')),
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -74,12 +100,24 @@ export default function EditProfilePage() {
     setUploading(true);
     setError('');
     try {
-      const ext = file.name.split('.').pop();
+      // Convert to WebP for smaller file size
+      let uploadBlob: Blob = file;
+      let ext = file.name.split('.').pop() || 'jpg';
+      try {
+        uploadBlob = await convertToWebP(file);
+        ext = 'webp';
+      } catch {
+        // fallback to original
+      }
+
       const path = `avatars/${userId}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('posts')
-        .upload(path, file, { upsert: true });
+        .upload(path, uploadBlob, {
+          upsert: true,
+          contentType: ext === 'webp' ? 'image/webp' : file.type,
+        });
 
       if (uploadError) throw uploadError;
 
