@@ -14,9 +14,18 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
-        router.push('/');
+        const { data } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+        if (data?.username) {
+          router.push(`/profile/${data.username}`);
+        } else {
+          router.push('/feed');
+        }
       }
     });
   }, [router]);
@@ -35,12 +44,18 @@ export default function LoginPage() {
         if (error) throw error;
         setMessage('Check your email for the confirmation link!');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        router.push('/');
+        // Redirect to user's profile
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', signInData.user.id)
+          .single();
+        router.push(profileData?.username ? `/profile/${profileData.username}` : '/feed');
       }
     } catch (error: any) {
       setMessage(error.message);

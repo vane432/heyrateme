@@ -10,17 +10,27 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      // Wait for Supabase to parse the hash/code and set the session
       const { data: { session } } = await supabase.auth.getSession();
 
       const finalize = async (s: typeof session) => {
         if (s?.user) {
           try {
-            await getOrCreateUser(s.user);
+            const profile = await getOrCreateUser(s.user);
+            // Redirect to the user's own profile page
+            router.replace(`/profile/${profile.username}`);
           } catch (e) {
-            // User may already exist, that's fine
+            // Fallback: look up username from DB
+            const { data } = await supabase
+              .from('users')
+              .select('username')
+              .eq('id', s.user.id)
+              .single();
+            if (data?.username) {
+              router.replace(`/profile/${data.username}`);
+            } else {
+              router.replace('/feed');
+            }
           }
-          router.replace('/feed');
         } else {
           router.replace('/login');
         }
@@ -29,7 +39,6 @@ export default function AuthCallbackPage() {
       if (session) {
         await finalize(session);
       } else {
-        // Give Supabase a moment to process the tokens from URL hash
         setTimeout(async () => {
           const { data: { session: retrySession } } = await supabase.auth.getSession();
           await finalize(retrySession);
