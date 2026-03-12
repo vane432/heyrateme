@@ -3,50 +3,65 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getOrCreateUser } from '@/lib/queries';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const redirectToProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', userId)
+        .single();
 
-      const finalize = async (s: typeof session) => {
-        if (s?.user) {
-          try {
-            const profile = await getOrCreateUser(s.user);
-            // Redirect to the user's own profile page
-            router.replace(`/profile/${profile.username}`);
-          } catch (e) {
-            // Fallback: look up username from DB
-            const { data } = await supabase
-              .from('users')
-              .select('username')
-              .eq('id', s.user.id)
-              .single();
-            if (data?.username) {
-              router.replace(`/profile/${data.username}`);
-            } else {
-              router.replace('/feed');
-            }
-          }
-        } else {
-          router.replace('/login');
-        }
-      };
-
-      if (session) {
-        await finalize(session);
+      if (data?.username) {
+        router.replace(`/profile/${data.username}`);
       } else {
+        // Profile not created yet by trigger — wait briefly and retry once
         setTimeout(async () => {
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
-          await finalize(retrySession);
-        }, 1500);
+          const { data: retryData } = await supabase
+            .from('users')
+            .select('username')
+            .eq('id', userId)
+            .single();
+          router.replace(retryData?.username ? `/profile/${retryData.username}` : '/feed');
+        }, 2000);
       }
     };
 
-    handleAuthCallback();
+    // First check if session already exists (e.g. page reload)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        await redirectToProfile(session.user.id);
+        return;
+      }
+
+      // Otherwise wait for SIGNED_IN event (fires when Supabase processes the OAuth tokens)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          subscription.unsubscribe();
+          await redirectToProfile(session.user.id);
+        }
+        // If token_refreshed or other events with a session, also handle
+        if (event === 'TOKEN_REFRESHED' && session?.user) {
+          subscription.unsubscribe();
+          await redirectToProfile(session.user.id);
+        }
+      });
+
+      // Safety fallback — if nothing fires after 5s, go to login
+      setTimeout(() => {
+        subscription.unsubscribe();
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            redirectToProfile(session.user.id);
+          } else {
+            router.replace('/login');
+          }
+        });
+      }, 5000);
+    });
   }, [router]);
 
   return (

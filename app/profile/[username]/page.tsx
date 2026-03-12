@@ -18,7 +18,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Retry auth check up to 3 times with delay to avoid redirect loop
+      // caused by session not being immediately available after OAuth
+      let user = null;
+      for (let i = 0; i < 3; i++) {
+        const { data } = await supabase.auth.getUser();
+        if (data.user) { user = data.user; break; }
+        if (i < 2) await new Promise(r => setTimeout(r, 1000));
+      }
+
       if (!user) { router.push('/login'); return; }
       setCurrentUser(user);
 
