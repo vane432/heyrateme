@@ -8,6 +8,8 @@ export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
+    const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
     const sanitizeHandle = (raw: string) => {
       const cleaned = raw
         .toLowerCase()
@@ -34,6 +36,18 @@ export default function AuthCallbackPage() {
       }
 
       return `user_${Date.now().toString().slice(-8)}`;
+    };
+
+    const decodeJwtPayload = (token: string): any | null => {
+      try {
+        const part = token.split('.')[1];
+        if (!part) return null;
+        const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+        return JSON.parse(atob(padded));
+      } catch {
+        return null;
+      }
     };
 
     const ensureProfileAndGetUsername = async (user: any) => {
@@ -74,22 +88,66 @@ export default function AuthCallbackPage() {
     };
 
     const init = async () => {
+      let tokenUserId: string | null = null;
+      let tokenEmailHandle: string | null = null;
+
       // Force session creation from hash tokens (handles www/non-www callback quirks)
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const accessToken = hash.get('access_token');
         const refreshToken = hash.get('refresh_token');
 
+        if (accessToken) {
+          const payload = decodeJwtPayload(accessToken);
+          tokenUserId = payload?.sub || null;
+          tokenEmailHandle = payload?.email ? String(payload.email).split('@')[0] : null;
+        }
+
         if (accessToken && refreshToken) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
+          try {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+          } catch {
+            // We'll still try session/user recovery paths below
+          }
         }
 
         // Remove sensitive tokens from URL
         window.history.replaceState({}, '', '/auth/callback');
       }
+
+      const tryResolveAndRedirect = async () => {
+        // 1) Preferred: authenticated user from session
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await redirectToProfile(user);
+          return true;
+        }
+
+        // 2) Fallback: find DB profile by user id from token payload
+        if (tokenUserId) {
+          for (let i = 0; i < 10; i++) {
+            const { data } = await supabase
+              .from('users')
+              .select('username')
+              .eq('id', tokenUserId)
+              .maybeSingle();
+
+            if (data?.username) {
+              router.replace(`/profile/${data.username}`);
+              return true;
+            }
+
+            await wait(700);
+          }
+        }
+
+        return false;
+      };
+
+      if (await tryResolveAndRedirect()) return;
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -107,13 +165,15 @@ export default function AuthCallbackPage() {
       // Final fallback with extra wait before sending to login
       setTimeout(async () => {
         subscription.unsubscribe();
-        const { data: { session: lateSession } } = await supabase.auth.getSession();
-        if (lateSession?.user) {
-          await redirectToProfile(lateSession.user);
+        if (await tryResolveAndRedirect()) return;
+
+        // Last-resort fallback: route to a deterministic profile path based on email handle
+        if (tokenEmailHandle) {
+          router.replace(`/profile/${sanitizeHandle(tokenEmailHandle)}`);
         } else {
-          router.replace('/login');
+          router.replace('/feed');
         }
-      }, 12000);
+      }, 15000);
     };
 
     init();
