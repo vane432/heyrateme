@@ -7,261 +7,426 @@ import { getUserProfile } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
 
+type Tab = 'posts' | 'top';
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>('posts');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
   const params = useParams();
   const username = params.username as string;
 
   useEffect(() => {
     const init = async () => {
-      // Retry auth check up to 3 times with delay to avoid redirect loop
-      // caused by session not being immediately available after OAuth
-      let user = null;
-      for (let i = 0; i < 3; i++) {
-        const { data } = await supabase.auth.getUser();
-        if (data.user) { user = data.user; break; }
-        if (i < 2) await new Promise(r => setTimeout(r, 1000));
-      }
-
-      if (!user) { router.push('/login'); return; }
-      setCurrentUser(user);
-
-      // Get current user's own profile for comparison
-      const { data: ownProfile } = await supabase
-        .from('users')
-        .select('username, avatar_url')
-        .eq('id', user.id)
-        .single();
-      setCurrentUserProfile(ownProfile);
-
+      // Load profile publicly — no auth required, never redirects to login
       try {
         const data = await getUserProfile(username);
         setProfile(data);
-      } catch (error) {
-        console.error('Error loading profile:', error);
+      } catch {
+        // user not found — profile stays null
       } finally {
         setLoading(false);
       }
+
+      // Check auth state in background — completely non-blocking
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!user) return;
+        setCurrentUser(user);
+        const { data: own } = await supabase
+          .from('users')
+          .select('username, avatar_url')
+          .eq('id', user.id)
+          .single();
+        setCurrentUserProfile(own);
+      });
     };
     init();
-  }, [username, router]);
+  }, [username]);
 
   const isOwnProfile = currentUserProfile?.username === username;
 
+  const copyLink = () => {
+    navigator.clipboard.writeText('https://heyrate.me/profile/' + username);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleFollow = () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setIsFollowing(f => !f);
+    setFollowersCount(c => isFollowing ? c - 1 : c + 1);
+  };
+
+  /* ── Loading skeleton ── */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          <p className="text-gray-500">Loading profile...</p>
+      <div className="min-h-screen bg-white">
+        <div className="h-44 bg-gradient-to-br from-purple-400 via-pink-400 to-orange-300 animate-pulse" />
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="flex items-end justify-between -mt-14 mb-4 pb-1">
+            <div className="w-28 h-28 rounded-full bg-white border-4 border-white shadow-lg">
+              <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
+            </div>
+            <div className="flex gap-2">
+              <div className="w-28 h-10 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="w-24 h-10 bg-gray-200 rounded-xl animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-2 mb-6">
+            <div className="w-40 h-5 bg-gray-200 rounded animate-pulse" />
+            <div className="w-28 h-3 bg-gray-100 rounded animate-pulse" />
+          </div>
+          <div className="grid grid-cols-5 gap-4 py-4 border-t border-gray-100">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-5 bg-gray-200 rounded animate-pulse" />
+                <div className="w-12 h-3 bg-gray-100 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
+  /* ── Not found ── */
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <div className="text-6xl">🔍</div>
-        <h2 className="text-2xl font-bold text-gray-800">User not found</h2>
-        <p className="text-gray-500">@{username} doesn't exist</p>
-        <Link href="/feed" className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
-          Back to Feed
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4 px-4">
+        <div className="text-7xl">🔍</div>
+        <h2 className="text-2xl font-bold text-gray-900">User not found</h2>
+        <p className="text-gray-500 text-center">@{username} doesn&apos;t exist on HeyRateMe</p>
+        <Link href="/" className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition">
+          Go Home
         </Link>
       </div>
     );
   }
 
-  const totalRatings = profile.posts.reduce((sum: number, p: any) => sum + p.rating_count, 0);
+  const totalRatings = profile.posts.reduce((s: number, p: any) => s + p.rating_count, 0);
+  const topPost = profile.posts.reduce((best: any, p: any) =>
+    (!best || p.average_rating > best.average_rating) ? p : best, null);
+  const ratedPosts = [...profile.posts]
+    .filter((p: any) => p.average_rating > 0)
+    .sort((a: any, b: any) => b.average_rating - a.average_rating);
+  const categories: string[] = Array.from(new Set(profile.posts.map((p: any) => p.category as string)));
+  const catEmoji: Record<string, string> = {
+    fashion: '👗', food: '🍕', fitness: '💪', tech: '💻', art: '🎨',
+    music: '🎵', travel: '✈️', beauty: '💄', sports: '⚽', lifestyle: '✨',
+    gaming: '🎮', books: '📚', pets: '🐾', diy: '🔨', other: '🌟',
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top nav bar */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-900 transition">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <span className="font-semibold text-gray-900">@{profile.user.username}</span>
-        </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Profile header card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          {/* Top row: avatar + stats */}
-          <div className="flex items-center gap-8 mb-6">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden ring-4 ring-purple-100">
-                {profile.user.avatar_url ? (
-                  <Image
-                    src={profile.user.avatar_url}
-                    alt={profile.user.username}
-                    width={128}
-                    height={128}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-4xl">
-                    {profile.user.username[0].toUpperCase()}
-                  </div>
-                )}
-              </div>
-              {/* Online indicator */}
-              <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
-            </div>
-
-            {/* Stats */}
-            <div className="flex-1 grid grid-cols-3 gap-2 text-center">
-              <div className="flex flex-col items-center p-3 rounded-xl bg-gray-50">
-                <span className="text-2xl font-bold text-gray-900">{profile.postCount}</span>
-                <span className="text-xs text-gray-500 mt-0.5">Posts</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl bg-gray-50">
-                <span className="text-2xl font-bold text-gray-900">{totalRatings}</span>
-                <span className="text-xs text-gray-500 mt-0.5">Ratings</span>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-xl bg-yellow-50">
-                <span className="text-2xl font-bold text-yellow-600 flex items-center gap-0.5">
-                  {profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—'}
-                  {profile.averageRating > 0 && <span className="text-yellow-400 text-lg">★</span>}
-                </span>
-                <span className="text-xs text-gray-500 mt-0.5">Avg Rating</span>
-              </div>
+      {/* ─── Sticky header ─── */}
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-30">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
+              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <div className="font-bold text-gray-900 text-sm leading-tight">@{username}</div>
+              <div className="text-xs text-gray-400">{profile.postCount} posts</div>
             </div>
           </div>
-
-          {/* Username and email */}
-          <div className="mb-4">
-            <h1 className="text-xl font-bold text-gray-900">@{profile.user.username}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{profile.user.email}</p>
-            <p className="text-sm text-gray-600 mt-2">
-              Member since {new Date(profile.user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-
-          {/* Star rating visual */}
-          {profile.averageRating > 0 && (
-            <div className="flex items-center gap-1 mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                  key={star}
-                  className={`text-xl ${star <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}
-                >
-                  ★
-                </span>
-              ))}
-              <span className="text-sm text-gray-500 ml-1">
-                {profile.averageRating.toFixed(2)} out of 5
-              </span>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex gap-3">
-            {isOwnProfile ? (
-              <>
-                <Link
-                  href="/create"
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition"
-                >
-                  + New Post
-                </Link>
-                <Link
-                  href="/feed"
-                  className="flex-1 bg-gray-100 text-gray-800 text-center py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-200 transition"
-                >
-                  View Feed
-                </Link>
-              </>
-            ) : (
-              <Link
-                href="/feed"
-                className="flex-1 bg-gray-100 text-gray-800 text-center py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-200 transition"
-              >
-                ← Back to Feed
+          <div className="flex items-center gap-2">
+            <button onClick={copyLink} title="Share profile" className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500">
+              {copied
+                ? <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              }
+            </button>
+            {!currentUser && (
+              <Link href="/login" className="text-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full font-semibold hover:opacity-90 transition">
+                Sign In
               </Link>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Posts section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-              Posts
-            </h2>
-            <span className="text-sm text-gray-400">{profile.postCount} {profile.postCount === 1 ? 'post' : 'posts'}</span>
+      {/* ─── Profile header ─── */}
+      <div className="bg-white shadow-sm">
+
+        {/* Cover banner */}
+        <div className="relative h-44 md:h-56 overflow-hidden bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400">
+          <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-white/10" />
+          <div className="absolute -bottom-20 -right-10 w-80 h-80 rounded-full bg-white/10" />
+          <div className="absolute top-1/2 left-1/2 w-48 h-48 rounded-full bg-white/5 -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-4 right-5 font-black text-white/20 text-5xl select-none tracking-tight">
+            @{username}
+          </div>
+          {profile.averageRating >= 4 && (
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="text-yellow-400">★</span>
+              {profile.averageRating.toFixed(1)} avg rating
+            </div>
+          )}
+        </div>
+
+        <div className="max-w-3xl mx-auto px-4">
+
+          {/* Avatar + action buttons row */}
+          <div className="flex items-end justify-between -mt-14 md:-mt-16 mb-3">
+            <div className="relative">
+              <div className="w-28 h-28 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-xl">
+                <div className="w-full h-full rounded-full overflow-hidden border-[3px] border-white">
+                  {profile.user.avatar_url ? (
+                    <Image src={profile.user.avatar_url} alt={username} width={128} height={128} className="object-cover w-full h-full" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white font-black text-4xl">
+                      {username[0].toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {profile.averageRating >= 4 && (
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center shadow-md">
+                  <span className="text-white text-xs font-black">★</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pb-1">
+              {isOwnProfile ? (
+                <>
+                  <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition shadow-sm">
+                    + New Post
+                  </Link>
+                  <button className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
+                    Edit Profile
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleFollow}
+                    className={`px-6 py-2 rounded-xl text-sm font-bold transition shadow-sm ${isFollowing ? 'border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'}`}
+                  >
+                    {isFollowing ? '✓ Following' : 'Follow'}
+                  </button>
+                  <Link href={currentUser ? '/feed' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
+                    Rate
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
-          {profile.posts.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 py-20 flex flex-col items-center gap-4">
-              <div className="text-6xl">📸</div>
-              <h3 className="text-xl font-semibold text-gray-700">No posts yet</h3>
-              <p className="text-gray-400 text-sm">
-                {isOwnProfile ? 'Share your first post and get rated!' : 'This user hasn\'t posted anything yet.'}
+          {/* Name, bio, stars, link */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h1 className="text-xl font-black text-gray-900">@{profile.user.username}</h1>
+              {profile.averageRating >= 4.5 && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+                  ✦ TOP RATED
+                </span>
+              )}
+            </div>
+            <p className="text-gray-400 text-xs">
+              Member since {new Date(profile.user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </p>
+            {profile.user.bio && (
+              <p className="text-gray-700 text-sm mt-2 leading-relaxed">{profile.user.bio}</p>
+            )}
+            {profile.averageRating > 0 && (
+              <div className="flex items-center gap-1 mt-3">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <span key={s} className={`text-lg leading-none ${s <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                ))}
+                <span className="text-sm font-bold text-gray-700 ml-1">{profile.averageRating.toFixed(2)}</span>
+                <span className="text-xs text-gray-400 ml-0.5">/ 5.00</span>
+              </div>
+            )}
+            <button onClick={copyLink} className="flex items-center gap-1.5 mt-2 text-purple-600 text-xs font-medium hover:text-purple-800 transition">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              heyrate.me/profile/{username}
+            </button>
+          </div>
+
+          {/* Stats bar — Posts | Followers | Following | Ratings | Avg ★ */}
+          <div className="grid grid-cols-5 py-4 border-t border-gray-100">
+            {[
+              { label: 'Posts',     value: profile.postCount, gold: false },
+              { label: 'Followers', value: followersCount,    gold: false },
+              { label: 'Following', value: followingCount,    gold: false },
+              { label: 'Ratings',   value: totalRatings,      gold: false },
+              { label: 'Avg ★',    value: profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—', gold: true },
+            ].map(stat => (
+              <div key={stat.label} className="flex flex-col items-center text-center cursor-pointer hover:opacity-70 transition select-none">
+                <span className={`text-lg font-black leading-none ${stat.gold ? 'text-yellow-500' : 'text-gray-900'}`}>{stat.value}</span>
+                <span className="text-xs text-gray-400 mt-1 leading-none">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Category highlights (story-circles) ─── */}
+      {categories.length > 0 && (
+        <div className="bg-white mt-2 border-b border-gray-100">
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="flex gap-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {categories.map((cat: string) => (
+                <div key={cat} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-gray-200 group-hover:border-purple-400 group-hover:shadow-md transition-all duration-200 flex items-center justify-center text-2xl">
+                    {catEmoji[cat?.toLowerCase()] || '📌'}
+                  </div>
+                  <span className="text-xs text-gray-600 capitalize font-medium">{cat}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Tab bar ─── */}
+      <div className="bg-white mt-2 border-b border-gray-100 sticky top-14 z-20">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('posts')}
+              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'posts' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+              Posts
+            </button>
+            <button
+              onClick={() => setActiveTab('top')}
+              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'top' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+              Top Rated
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Content area ─── */}
+      <div className="max-w-3xl mx-auto">
+
+        {/* Posts grid */}
+        {activeTab === 'posts' && (
+          profile.posts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-5xl mb-4">📸</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No posts yet</h3>
+              <p className="text-gray-400 text-center text-sm max-w-xs">
+                {isOwnProfile ? 'Share something and let the world rate it!' : 'Nothing here yet — check back soon.'}
               </p>
               {isOwnProfile && (
-                <Link
-                  href="/create"
-                  className="mt-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
-                >
+                <Link href="/create" className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 transition shadow-md">
                   Create First Post
                 </Link>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-1 md:gap-2">
-              {profile.posts.map((post: any, index: number) => (
-                <Link
-                  key={post.id}
-                  href={`/post/${post.id}`}
-                  className="relative aspect-square bg-gray-100 rounded-lg md:rounded-xl overflow-hidden group"
-                >
+            <div className="grid grid-cols-3 gap-px bg-gray-200 mt-2">
+              {profile.posts.map((post: any) => (
+                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-gray-100 overflow-hidden group">
                   <Image
                     src={post.image_url}
                     alt={post.caption}
                     fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 768px) 33vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
-                  {/* Top badge for best post */}
-                  {index === 0 && profile.postCount > 1 && (
-                    <div className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full">
-                      TOP
+                  {post.id === topPost?.id && profile.postCount > 1 && (
+                    <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-yellow-900 text-xs font-black px-2 py-0.5 rounded-full shadow-md">
+                      TOP ★
                     </div>
                   )}
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="text-white text-center">
-                      <div className="flex items-center justify-center gap-1 text-lg font-bold">
-                        <span className="text-yellow-400 text-xl">★</span>
-                        <span>{post.average_rating > 0 ? post.average_rating.toFixed(1) : '—'}</span>
-                      </div>
-                      <div className="text-xs text-gray-200 mt-0.5">
-                        {post.rating_count} {post.rating_count === 1 ? 'rating' : 'ratings'}
-                      </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 z-10 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 p-2">
+                    <div className="flex items-center gap-1.5 text-white text-xl font-black">
+                      <span className="text-yellow-300">★</span>
+                      <span>{post.average_rating > 0 ? post.average_rating.toFixed(1) : '—'}</span>
                     </div>
+                    {post.rating_count > 0 && <div className="text-gray-300 text-xs">{post.rating_count} ratings</div>}
+                    <p className="text-white/80 text-xs mt-1 text-center line-clamp-2 leading-tight">{post.caption}</p>
                   </div>
-                  {/* Category chip */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                    <span className="text-white text-xs font-medium">{post.category}</span>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <span className="text-white text-xs font-medium capitalize">{post.category}</span>
                   </div>
                 </Link>
               ))}
             </div>
-          )}
-        </div>
+          )
+        )}
+
+        {/* Top Rated ranked list */}
+        {activeTab === 'top' && (
+          <div className="p-4 space-y-3 mt-2">
+            {ratedPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-4">
+                <div className="w-20 h-20 rounded-full bg-yellow-50 flex items-center justify-center text-4xl mb-4">⭐</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No ratings yet</h3>
+                <p className="text-gray-400 text-sm text-center">Posts that get rated will appear here, ranked by score.</p>
+              </div>
+            ) : (
+              ratedPosts.map((post: any, index: number) => (
+                <Link key={post.id} href={`/post/${post.id}`} className="flex gap-4 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 group border border-gray-50">
+                  <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
+                    <Image src={post.image_url} alt={post.caption} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">{post.caption}</p>
+                      <span className={`flex-shrink-0 text-xs font-black w-8 h-6 flex items-center justify-center rounded-full ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-gray-200 text-gray-600' : index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400'}`}>
+                        #{index + 1}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-0.5 mb-1.5">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <span key={s} className={`text-base leading-none ${s <= Math.round(post.average_rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                      ))}
+                      <span className="text-sm font-black text-gray-900 ml-2">{post.average_rating.toFixed(1)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{post.rating_count} {post.rating_count === 1 ? 'rating' : 'ratings'}</span>
+                      <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full capitalize font-medium">{post.category}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ─── Guest CTA banner (only for non-logged-in visitors) ─── */}
+      {!currentUser && profile.posts.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 px-4">
+          <div className="max-w-sm mx-auto mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gray-900">Join HeyRateMe</p>
+              <p className="text-xs text-gray-500 mt-0.5">Follow {username} and rate their posts</p>
+            </div>
+            <Link href="/login" className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-md">
+              Sign In
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <div className="h-28" />
     </div>
   );
 }
