@@ -211,9 +211,9 @@ export default function ProfilePage() {
                   <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition shadow-sm">
                     + New Post
                   </Link>
-                  <button className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
+                  <Link href="/edit-profile" className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
                     Edit Profile
-                  </button>
+                  </Link>
                 </>
               ) : (
                 <>
@@ -234,18 +234,52 @@ export default function ProfilePage() {
           {/* Name, bio, stars, link */}
           <div className="mb-5">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h1 className="text-xl font-black text-gray-900">@{profile.user.username}</h1>
+              <h1 className="text-xl font-black text-gray-900">
+                {profile.user.display_name || `@${profile.user.username}`}
+              </h1>
               {profile.averageRating >= 4.5 && (
                 <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
                   ✦ TOP RATED
                 </span>
               )}
             </div>
-            <p className="text-gray-400 text-xs">
+            {profile.user.display_name && (
+              <p className="text-gray-500 text-sm font-medium">@{profile.user.username}</p>
+            )}
+            <p className="text-gray-400 text-xs mt-0.5">
               Member since {new Date(profile.user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
             {profile.user.bio && (
               <p className="text-gray-700 text-sm mt-2 leading-relaxed">{profile.user.bio}</p>
+            )}
+            {/* Social links */}
+            {(profile.user.instagram || profile.user.tiktok || profile.user.twitter || profile.user.website) && (
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                {profile.user.instagram && (
+                  <a href={`https://instagram.com/${profile.user.instagram}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-pink-600 transition">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    @{profile.user.instagram}
+                  </a>
+                )}
+                {profile.user.tiktok && (
+                  <a href={`https://tiktok.com/@${profile.user.tiktok}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46 6.28 6.28 0 001.86-4.48V8.77a8.18 8.18 0 004.72 1.5v-3.4a4.85 4.85 0 01-1-.18z"/></svg>
+                    @{profile.user.tiktok}
+                  </a>
+                )}
+                {profile.user.twitter && (
+                  <a href={`https://x.com/${profile.user.twitter}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    @{profile.user.twitter}
+                  </a>
+                )}
+                {profile.user.website && (
+                  <a href={profile.user.website.startsWith('http') ? profile.user.website : `https://${profile.user.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 transition">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    {profile.user.website.replace(/^https?:\/\//, '')}
+                  </a>
+                )}
+              </div>
             )}
             {profile.averageRating > 0 && (
               <div className="flex items-center gap-1 mt-3">

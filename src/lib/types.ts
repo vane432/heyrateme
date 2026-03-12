@@ -15,6 +15,12 @@ export interface Database {
           username: string
           email: string
           avatar_url: string | null
+          display_name: string | null
+          bio: string | null
+          instagram: string | null
+          tiktok: string | null
+          twitter: string | null
+          website: string | null
           created_at: string
         }
         Insert: {
@@ -22,6 +28,12 @@ export interface Database {
           username: string
           email: string
           avatar_url?: string | null
+          display_name?: string | null
+          bio?: string | null
+          instagram?: string | null
+          tiktok?: string | null
+          twitter?: string | null
+          website?: string | null
           created_at?: string
         }
         Update: {
@@ -29,6 +41,12 @@ export interface Database {
           username?: string
           email?: string
           avatar_url?: string | null
+          display_name?: string | null
+          bio?: string | null
+          instagram?: string | null
+          tiktok?: string | null
+          twitter?: string | null
+          website?: string | null
           created_at?: string
         }
       }
