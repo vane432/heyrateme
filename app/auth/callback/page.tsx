@@ -8,48 +8,6 @@ export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-    const sanitizeHandle = (raw: string) => {
-      const cleaned = raw
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '');
-      return cleaned.length >= 3 ? cleaned : `user_${Math.random().toString(36).slice(2, 8)}`;
-    };
-
-    const generateUniqueUsername = async (baseRaw: string) => {
-      const base = sanitizeHandle(baseRaw).slice(0, 24);
-
-      for (let i = 0; i < 50; i++) {
-        const suffix = i === 0 ? '' : `_${i}`;
-        const candidate = `${base}${suffix}`.slice(0, 30);
-
-        const { data } = await supabase
-          .from('users')
-          .select('id')
-          .eq('username', candidate)
-          .maybeSingle();
-
-        if (!data) return candidate;
-      }
-
-      return `user_${Date.now().toString().slice(-8)}`;
-    };
-
-    const decodeJwtPayload = (token: string): any | null => {
-      try {
-        const part = token.split('.')[1];
-        if (!part) return null;
-        const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
-        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-        return JSON.parse(atob(padded));
-      } catch {
-        return null;
-      }
-    };
-
     const ensureProfileAndGetUsername = async (user: any, accessToken?: string) => {
       // Use the server-side API route so the upsert runs with the service role key
       // (bypasses RLS regardless of whether the client session is fully established)
@@ -86,94 +44,81 @@ export default function AuthCallbackPage() {
     };
 
     const init = async () => {
-      let tokenUserId: string | null = null;
-      let tokenEmailHandle: string | null = null;
-      let rawAccessToken: string | null = null;
+      let redirected = false;
 
-      // Force session creation from hash tokens (handles www/non-www callback quirks)
+      // Unified redirect helper — always uses the live session access_token
+      const doRedirect = async (user: any, accessToken: string) => {
+        if (redirected) return;
+        redirected = true;
+        await redirectToProfile(user, accessToken);
+      };
+
+      // ── PATH 1: PKCE flow — Supabase v2 default ──────────────────────────
+      // After Google OAuth, Supabase sends: /auth/callback?code=XXXX
+      const urlCode = new URLSearchParams(window.location.search).get('code');
+      if (urlCode) {
+        try {
+          const { data: codeData, error: codeErr } = await supabase.auth.exchangeCodeForSession(urlCode);
+          if (!codeErr && codeData?.session) {
+            await doRedirect(codeData.session.user, codeData.session.access_token);
+            return;
+          }
+          console.error('[callback] PKCE exchange error:', codeErr);
+        } catch (e) {
+          console.error('[callback] exchangeCodeForSession threw:', e);
+        }
+      }
+
+      // ── PATH 2: Implicit flow — /auth/callback#access_token=XXXX ─────────
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const accessToken = hash.get('access_token');
         const refreshToken = hash.get('refresh_token');
 
-        if (accessToken) {
-          rawAccessToken = accessToken;
-          const payload = decodeJwtPayload(accessToken);
-          tokenUserId = payload?.sub || null;
-          tokenEmailHandle = payload?.email ? String(payload.email).split('@')[0] : null;
-        }
-
         if (accessToken && refreshToken) {
+          window.history.replaceState({}, '', '/auth/callback');
           try {
-            await supabase.auth.setSession({
+            const { data: sessData } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             });
+            if (sessData?.session) {
+              await doRedirect(sessData.session.user, sessData.session.access_token);
+              return;
+            }
           } catch {
-            // We'll still try session/user recovery paths below
+            // fall through to PATH 3
           }
         }
-
-        // Remove sensitive tokens from URL
-        window.history.replaceState({}, '', '/auth/callback');
       }
 
-      const tryResolveAndRedirect = async () => {
-        // 1) Preferred: authenticated user from session
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await redirectToProfile(user, rawAccessToken ?? undefined);
-          return true;
-        }
-
-        // 2) Fallback: find DB profile by user id from token payload
-        if (tokenUserId) {
-          for (let i = 0; i < 10; i++) {
-            const { data } = await supabase
-              .from('users')
-              .select('username')
-              .eq('id', tokenUserId)
-              .maybeSingle();
-
-            if (data?.username) {
-              router.replace(`/profile/${data.username}`);
-              return true;
-            }
-
-            await wait(700);
-          }
-        }
-
-        return false;
-      };
-
-      if (await tryResolveAndRedirect()) return;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await redirectToProfile(session.user, rawAccessToken ?? undefined);
+      // ── PATH 3: Session already exists (e.g. Supabase auto-detected code) ─
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      if (existingSession?.user) {
+        await doRedirect(existingSession.user, existingSession.access_token);
         return;
       }
 
+      // ── PATH 4: Wait for onAuthStateChange (PKCE exchange still in-flight) ─
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-        if (nextSession?.user) {
+        if (!redirected && nextSession?.user) {
           subscription.unsubscribe();
-          await redirectToProfile(nextSession.user, rawAccessToken ?? undefined);
+          await doRedirect(nextSession.user, nextSession.access_token!);
         }
       });
 
-      // Final fallback with extra wait before sending to login
+      // ── PATH 5: 12s hard timeout ──────────────────────────────────────────
       setTimeout(async () => {
+        if (redirected) return;
         subscription.unsubscribe();
-        if (await tryResolveAndRedirect()) return;
-
-        // Last-resort fallback: route to a deterministic profile path based on email handle
-        if (tokenEmailHandle) {
-          router.replace(`/profile/${sanitizeHandle(tokenEmailHandle)}`);
-        } else {
-          router.replace('/feed');
+        const { data: { session: lateSession } } = await supabase.auth.getSession();
+        if (lateSession?.user) {
+          await doRedirect(lateSession.user, lateSession.access_token);
+          return;
         }
-      }, 15000);
+        // Nothing worked — send back to login
+        router.replace('/login');
+      }, 12000);
     };
 
     init();
