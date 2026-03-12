@@ -11,13 +11,11 @@ export default function LandingNavbar() {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    // Get current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
@@ -46,26 +44,17 @@ export default function LandingNavbar() {
     <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-gray-900">
             HeyRateMe
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-gray-700 hover:text-gray-900 transition">
-              How It Works
-            </a>
-            <a href="#top-posts" className="text-gray-700 hover:text-gray-900 transition">
-              Top Posts
-            </a>
+            <a href="#how-it-works" className="text-gray-700 hover:text-gray-900 transition">How It Works</a>
+            <a href="#top-posts" className="text-gray-700 hover:text-gray-900 transition">Top Posts</a>
 
             {user && profile ? (
-              // Logged-in state
               <div className="flex items-center gap-4">
-                <Link href="/feed" className="text-gray-700 hover:text-gray-900 transition font-medium">
-                  Feed
-                </Link>
+                <Link href="/feed" className="text-gray-700 hover:text-gray-900 transition font-medium">Feed</Link>
                 <Link href={`/profile/${profile.username}`} className="flex items-center gap-2 group">
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 border-2 border-transparent group-hover:border-purple-500 transition">
                     {profile.avatar_url ? (
@@ -78,30 +67,20 @@ export default function LandingNavbar() {
                   </div>
                   <span className="text-gray-800 font-medium text-sm">{profile.username}</span>
                 </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="text-sm text-gray-500 hover:text-gray-900 transition"
-                >
+                <button onClick={handleSignOut} className="text-sm text-gray-500 hover:text-gray-900 transition">
                   Sign out
                 </button>
               </div>
             ) : (
-              // Logged-out state
               <>
-                <Link href="/login" className="text-gray-700 hover:text-gray-900 transition">
-                  Sign In
-                </Link>
-                <Link
-                  href="/login"
-                  className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
-                >
+                <Link href="/login" className="text-gray-700 hover:text-gray-900 transition">Sign In</Link>
+                <Link href="/login" className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition">
                   Get Started
                 </Link>
               </>
             )}
           </div>
 
-          {/* Mobile menu button */}
           <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isOpen ? (
@@ -113,125 +92,22 @@ export default function LandingNavbar() {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {isOpen && (
           <div className="md:hidden py-4 space-y-4">
-            <a href="#how-it-works" className="block text-gray-700 hover:text-gray-900" onClick={() => setIsOpen(false)}>
-              How It Works
-            </a>
-            <a href="#top-posts" className="block text-gray-700 hover:text-gray-900" onClick={() => setIsOpen(false)}>
-              Top Posts
-            </a>
+            <a href="#how-it-works" className="block text-gray-700 hover:text-gray-900" onClick={() => setIsOpen(false)}>How It Works</a>
+            <a href="#top-posts" className="block text-gray-700 hover:text-gray-900" onClick={() => setIsOpen(false)}>Top Posts</a>
             {user && profile ? (
               <>
                 <Link href="/feed" className="block text-gray-700 hover:text-gray-900">Feed</Link>
-                <Link href={`/profile/${profile.username}`} className="block text-gray-700 hover:text-gray-900">
-                  @{profile.username}
-                </Link>
-                <button onClick={handleSignOut} className="block text-gray-500 hover:text-gray-900 w-full text-left">
-                  Sign out
-                </button>
+                <Link href={`/profile/${profile.username}`} className="block text-gray-700 hover:text-gray-900">@{profile.username}</Link>
+                <button onClick={handleSignOut} className="block text-gray-500 hover:text-gray-900 w-full text-left">Sign out</button>
               </>
             ) : (
               <>
                 <Link href="/login" className="block text-gray-700 hover:text-gray-900">Sign In</Link>
-                <Link href="/login" className="block bg-black text-white px-6 py-2 rounded-lg text-center hover:bg-gray-800">
-                  Get Started
-                </Link>
+                <Link href="/login" className="block bg-black text-white px-6 py-2 rounded-lg text-center hover:bg-gray-800">Get Started</Link>
               </>
             )}
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-}
-
-
-  return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="text-2xl font-bold text-gray-900">
-            HeyRateMe
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-gray-700 hover:text-gray-900 transition">
-              How It Works
-            </a>
-            <a href="#top-posts" className="text-gray-700 hover:text-gray-900 transition">
-              Top Posts
-            </a>
-            <Link href="/login" className="text-gray-700 hover:text-gray-900 transition">
-              Sign In
-            </Link>
-            <Link
-              href="/login"
-              className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
-            >
-              Get Started
-            </Link>
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {isOpen && (
-          <div className="md:hidden py-4 space-y-4">
-            <a
-              href="#how-it-works"
-              className="block text-gray-700 hover:text-gray-900"
-              onClick={() => setIsOpen(false)}
-            >
-              How It Works
-            </a>
-            <a
-              href="#top-posts"
-              className="block text-gray-700 hover:text-gray-900"
-              onClick={() => setIsOpen(false)}
-            >
-              Top Posts
-            </a>
-            <Link href="/login" className="block text-gray-700 hover:text-gray-900">
-              Sign In
-            </Link>
-            <Link
-              href="/login"
-              className="block bg-black text-white px-6 py-2 rounded-lg text-center hover:bg-gray-800"
-            >
-              Get Started
-            </Link>
           </div>
         )}
       </div>
