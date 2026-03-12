@@ -26,14 +26,21 @@ export default function ProfilePage() {
   useEffect(() => {
     const init = async () => {
       // Load profile publicly — no auth required, never redirects to login
-      try {
-        const data = await getUserProfile(username);
-        setProfile(data);
-      } catch {
-        // user not found — profile stays null
-      } finally {
-        setLoading(false);
+      // Retry up to 5 times to handle the race condition where a brand-new user
+      // was just created by the auth callback and the DB row may not be visible yet.
+      let data = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          data = await getUserProfile(username);
+          break; // success — stop retrying
+        } catch {
+          if (attempt < 4) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
       }
+      setProfile(data);
+      setLoading(false);
 
       // Check auth state in background — completely non-blocking
       supabase.auth.getUser().then(async ({ data: { user } }) => {

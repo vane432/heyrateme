@@ -50,46 +50,45 @@ export default function AuthCallbackPage() {
       }
     };
 
-    const ensureProfileAndGetUsername = async (user: any) => {
+    const ensureProfileAndGetUsername = async (user: any, accessToken?: string) => {
+      // Use the server-side API route so the upsert runs with the service role key
+      // (bypasses RLS regardless of whether the client session is fully established)
+      try {
+        const res = await fetch('/api/create-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email || `${user.id.slice(0, 8)}@heyrate.me`,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            access_token: accessToken,
+          }),
+        });
+        const json = await res.json();
+        if (json.username) return json.username as string;
+        console.error('[callback] create-profile error:', json.error);
+      } catch (err) {
+        console.error('[callback] fetch /api/create-profile failed:', err);
+      }
+
+      // Fallback: check if the row already exists (e.g. returning user)
       const { data: existing } = await supabase
         .from('users')
         .select('username')
         .eq('id', user.id)
         .maybeSingle();
-
-      if (existing?.username) return existing.username;
-
-      const email = user.email || `${user.id.slice(0, 8)}@heyrate.me`;
-      const emailHandle = email.split('@')[0] || user.id.slice(0, 8);
-      const username = await generateUniqueUsername(emailHandle);
-
-      await supabase.from('users').upsert(
-        {
-          id: user.id,
-          email,
-          username,
-          avatar_url: user.user_metadata?.avatar_url || null,
-        },
-        { onConflict: 'id' }
-      );
-
-      const { data: finalUser } = await supabase
-        .from('users')
-        .select('username')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      return finalUser?.username || username;
+      return existing?.username ?? null;
     };
 
-    const redirectToProfile = async (user: any) => {
-      const username = await ensureProfileAndGetUsername(user);
+    const redirectToProfile = async (user: any, accessToken?: string) => {
+      const username = await ensureProfileAndGetUsername(user, accessToken);
       router.replace(username ? `/profile/${username}` : '/feed');
     };
 
     const init = async () => {
       let tokenUserId: string | null = null;
       let tokenEmailHandle: string | null = null;
+      let rawAccessToken: string | null = null;
 
       // Force session creation from hash tokens (handles www/non-www callback quirks)
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
@@ -98,6 +97,7 @@ export default function AuthCallbackPage() {
         const refreshToken = hash.get('refresh_token');
 
         if (accessToken) {
+          rawAccessToken = accessToken;
           const payload = decodeJwtPayload(accessToken);
           tokenUserId = payload?.sub || null;
           tokenEmailHandle = payload?.email ? String(payload.email).split('@')[0] : null;
@@ -122,7 +122,7 @@ export default function AuthCallbackPage() {
         // 1) Preferred: authenticated user from session
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await redirectToProfile(user);
+          await redirectToProfile(user, rawAccessToken ?? undefined);
           return true;
         }
 
@@ -151,14 +151,14 @@ export default function AuthCallbackPage() {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await redirectToProfile(session.user);
+        await redirectToProfile(session.user, rawAccessToken ?? undefined);
         return;
       }
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
         if (nextSession?.user) {
           subscription.unsubscribe();
-          await redirectToProfile(nextSession.user);
+          await redirectToProfile(nextSession.user, rawAccessToken ?? undefined);
         }
       });
 
