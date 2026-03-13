@@ -185,7 +185,7 @@ export default function EditProfilePage() {
 
       // Redirect to updated profile after a brief pause
       setTimeout(() => {
-        router.push(`/profile/${json.username}`);
+        router.push(`/${json.username}`);
       }, 1000);
     } catch (err: any) {
       setError('Network error: ' + (err.message || 'Unknown'));
@@ -387,7 +387,7 @@ export default function EditProfilePage() {
         {/* Profile link */}
         {originalUsername && (
           <Link
-            href={`/profile/${originalUsername}`}
+            href={`/${originalUsername}`}
             className="block text-center text-sm text-purple-600 font-medium hover:text-purple-800 transition"
           >
             View your profile →

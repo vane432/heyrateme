@@ -22,7 +22,7 @@ export default function LoginPage() {
           .eq('id', user.id)
           .single();
         if (data?.username) {
-          router.push(`/profile/${data.username}`);
+          router.push(`/${data.username}`);
         } else {
           router.push('/feed');
         }
@@ -55,7 +55,7 @@ export default function LoginPage() {
           .select('username')
           .eq('id', signInData.user.id)
           .single();
-        router.push(profileData?.username ? `/profile/${profileData.username}` : '/feed');
+        router.push(profileData?.username ? `/${profileData.username}` : '/feed');
       }
     } catch (error: any) {
       setMessage(error.message);

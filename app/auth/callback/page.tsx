@@ -36,7 +36,7 @@ export default function AuthCallbackPage() {
 
     const redirectToProfile = async (user: any, accessToken?: string) => {
       const username = await ensureProfileAndGetUsername(user, accessToken);
-      router.replace(username ? `/profile/${username}` : '/feed');
+      router.replace(username ? `/${username}` : '/feed');
     };
 
     const init = async () => {

@@ -106,7 +106,7 @@ export default function PostPage() {
               </div>
               <div>
                 <Link
-                  href={`/profile/${post.users.username}`}
+                  href={`/${post.users.username}`}
                   className="font-semibold text-gray-900 hover:underline"
                 >
                   {post.users.username}
@@ -119,7 +119,7 @@ export default function PostPage() {
             <div className="mb-6">
               <p className="text-gray-900">
                 <Link
-                  href={`/profile/${post.users.username}`}
+                  href={`/${post.users.username}`}
                   className="font-semibold hover:underline"
                 >
                   {post.users.username}
