@@ -14,13 +14,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Redirect www to non-www
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.heyrate.me' }],
-        destination: 'https://heyrate.me/:path*',
-        permanent: true,
-      },
       // Redirect old /profile/username URLs to /username
       {
         source: '/profile/:username',
