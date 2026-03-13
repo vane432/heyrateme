@@ -15,12 +15,14 @@ export default function FeedView() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [userId, setUserId] = useState<string | undefined>();
   const router = useRouter();
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
 
       const { data: profile } = await supabase
         .from('users')
@@ -34,12 +36,12 @@ export default function FeedView() {
 
   useEffect(() => {
     loadPosts();
-  }, [selectedCategory]);
+  }, [selectedCategory, userId]);
 
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const data = await getFeedPosts(selectedCategory || undefined);
+      const data = await getFeedPosts(selectedCategory || undefined, userId);
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -127,7 +129,7 @@ export default function FeedView() {
         ) : (
           <div className="mt-4">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onRatingUpdate={loadPosts} />
+              <PostCard key={post.id} post={post} userId={userId} />
             ))}
           </div>
         )}
