@@ -32,17 +32,21 @@ export default function RatingStars({
     setIsSubmitting(false);
   };
 
+  const hasRated = !!userRating;
+  const isDisabled = readonly || hasRated || !userId;
+
+  // Before rating: show hover state or empty stars. After rating: show average.
   const displayRating = readonly
     ? averageRating
-    : hoverRating || userRating || averageRating;
-
-  const isDisabled = readonly || !!userRating || !userId;
+    : hasRated
+      ? averageRating
+      : hoverRating;
 
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = star <= Math.round(displayRating);
-        const isPartialFilled = star === Math.ceil(displayRating) && displayRating % 1 !== 0;
+        const isPartialFilled = !hasRated ? false : (star === Math.ceil(displayRating) && displayRating % 1 !== 0);
 
         return (
           <button
@@ -64,11 +68,18 @@ export default function RatingStars({
         );
       })}
       <span className="ml-2 text-sm text-gray-600">
-        {averageRating > 0 ? averageRating.toFixed(1) : 'No ratings yet'}
+        {readonly
+          ? (averageRating > 0 ? averageRating.toFixed(1) : 'No ratings yet')
+          : hasRated
+            ? averageRating.toFixed(1)
+            : userId
+              ? <span className="text-gray-400 italic">Rate to see score</span>
+              : (averageRating > 0 ? averageRating.toFixed(1) : 'No ratings yet')
+        }
       </span>
-      {userRating && (
+      {hasRated && (
         <span className="ml-2 text-xs text-gray-500">
-          (You rated: {userRating}★)
+          (You: {userRating}★)
         </span>
       )}
     </div>

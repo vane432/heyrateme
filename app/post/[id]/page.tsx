@@ -141,7 +141,9 @@ export default function PostPage() {
                 onRate={handleRate}
               />
               <p className="text-sm text-gray-500 mt-2">
-                {post.rating_count} {post.rating_count === 1 ? 'rating' : 'ratings'}
+                {post.user_rating
+                  ? `${post.rating_count} ${post.rating_count === 1 ? 'rating' : 'ratings'}`
+                  : ''}
               </p>
 
               {/* Comments placeholder */}

@@ -102,7 +102,10 @@ export default function PostCard({ post, onRatingUpdate }: PostCardProps) {
             onRate={handleRate}
           />
           <p className="text-xs text-gray-500 mt-1">
-            {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+            {userRating
+              ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+              : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+            }
           </p>
         </div>
 
