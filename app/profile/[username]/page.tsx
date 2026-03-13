@@ -264,7 +264,7 @@ export default function ProfilePage() {
           {/* Avatar + action buttons row */}
           <div className="flex items-end justify-between -mt-14 md:-mt-16 mb-3">
             <div className="relative">
-              <div className="w-28 h-28 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-xl">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-xl">
                 <div className="w-full h-full rounded-full overflow-hidden border-[3px] border-white">
                   {profile.user.avatar_url ? (
                     <Image src={profile.user.avatar_url} alt={username} width={128} height={128} className="object-cover w-full h-full" />
@@ -285,22 +285,22 @@ export default function ProfilePage() {
             <div className="flex gap-2 pb-1">
               {isOwnProfile ? (
                 <>
-                  <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition shadow-sm">
-                    + New Post
+                  <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-2 sm:px-5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition shadow-sm whitespace-nowrap">
+                    + Post
                   </Link>
-                  <Link href="/edit-profile" className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
-                    Edit Profile
+                  <Link href="/edit-profile" className="border-2 border-gray-200 bg-white text-gray-700 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap">
+                    Edit
                   </Link>
                 </>
               ) : (
                 <>
                   <button
                     onClick={handleFollow}
-                    className={`px-6 py-2 rounded-xl text-sm font-bold transition shadow-sm ${isFollowing ? 'border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'}`}
+                    className={`px-4 py-2 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm whitespace-nowrap ${isFollowing ? 'border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'}`}
                   >
                     {isFollowing ? '✓ Following' : 'Follow'}
                   </button>
-                  <Link href={currentUser ? '/' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition">
+                  <Link href={currentUser ? '/' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap">
                     Rate
                   </Link>
                 </>

@@ -98,21 +98,33 @@ export async function GET(req: NextRequest) {
 
     // Return list of followers or following with user info
     if (list === 'followers') {
-      const { data, error } = await client
+      const { data: follows, error } = await client
         .from('follows')
-        .select('users!follows_follower_id_fkey(id, username, display_name, avatar_url)')
+        .select('follower_id')
         .eq('following_id', userId);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json({ users: (data || []).map((r: any) => r.users) });
+      const ids = (follows || []).map((r: any) => r.follower_id);
+      if (ids.length === 0) return NextResponse.json({ users: [] });
+      const { data: users } = await client
+        .from('users')
+        .select('id, username, display_name, avatar_url')
+        .in('id', ids);
+      return NextResponse.json({ users: users || [] });
     }
 
     if (list === 'following') {
-      const { data, error } = await client
+      const { data: follows, error } = await client
         .from('follows')
-        .select('users!follows_following_id_fkey(id, username, display_name, avatar_url)')
+        .select('following_id')
         .eq('follower_id', userId);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json({ users: (data || []).map((r: any) => r.users) });
+      const ids = (follows || []).map((r: any) => r.following_id);
+      if (ids.length === 0) return NextResponse.json({ users: [] });
+      const { data: users } = await client
+        .from('users')
+        .select('id, username, display_name, avatar_url')
+        .in('id', ids);
+      return NextResponse.json({ users: users || [] });
     }
 
     // Get followers count
