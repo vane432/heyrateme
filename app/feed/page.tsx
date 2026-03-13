@@ -74,7 +74,7 @@ export default function HomePage() {
       ) : (
         <div>
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} onRatingUpdate={loadPosts} />
+            <PostCard key={post.id} post={post} userId={user?.id} onRatingUpdate={loadPosts} />
           ))}
         </div>
       )}

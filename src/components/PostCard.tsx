@@ -6,25 +6,24 @@ import RatingStars from './RatingStars';
 import type { PostWithUser } from '@/lib/types';
 import { submitRating } from '@/lib/queries';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 
 interface PostCardProps {
   post: PostWithUser;
+  userId?: string;
   onRatingUpdate?: () => void;
 }
 
-export default function PostCard({ post, onRatingUpdate }: PostCardProps) {
+export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps) {
   const [currentRating, setCurrentRating] = useState(post.average_rating);
   const [ratingCount, setRatingCount] = useState(post.rating_count);
   const [userRating, setUserRating] = useState(post.user_rating);
-  const [userId, setUserId] = useState<string | undefined>();
 
-  // Get user ID on mount
+  // Sync when parent reloads the post (e.g. after rating or page refresh)
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id);
-    });
-  }, []);
+    setCurrentRating(post.average_rating);
+    setRatingCount(post.rating_count);
+    setUserRating(post.user_rating);
+  }, [post.average_rating, post.rating_count, post.user_rating]);
 
   const handleRate = async (rating: number) => {
     if (!userId) return;
