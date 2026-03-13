@@ -17,12 +17,14 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [currentRating, setCurrentRating] = useState(post.average_rating);
   const [ratingCount, setRatingCount] = useState(post.rating_count);
   const [userRating, setUserRating] = useState(post.user_rating);
+  const [hasRated, setHasRated] = useState(!!post.user_rating);
 
-  // Sync when parent reloads the post (e.g. after rating or page refresh)
+  // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
     setCurrentRating(post.average_rating);
     setRatingCount(post.rating_count);
     setUserRating(post.user_rating);
+    setHasRated(!!post.user_rating);
   }, [post.average_rating, post.rating_count, post.user_rating]);
 
   const handleRate = async (rating: number) => {
@@ -38,6 +40,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       setCurrentRating(newAverage);
       setRatingCount(newCount);
       setUserRating(rating);
+      setHasRated(true);
     } catch (error: any) {
       alert(error.message);
     }
@@ -64,7 +67,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         </div>
         <div>
           <Link
-            href={`/profile/${post.users.username}`}
+            href={`/${post.users.username}`}
             className="font-semibold text-gray-900 hover:underline"
           >
             {post.users.username}
@@ -94,10 +97,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             userId={userId}
             averageRating={currentRating}
             userRating={userRating}
+            hasRated={hasRated}
             onRate={handleRate}
           />
           <p className="text-xs text-gray-500 mt-1">
-            {userRating
+            {hasRated
               ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
               : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
             }
@@ -107,7 +111,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         {/* Caption */}
         <p className="text-gray-900">
           <Link
-            href={`/profile/${post.users.username}`}
+            href={`/${post.users.username}`}
             className="font-semibold hover:underline"
           >
             {post.users.username}

@@ -7,6 +7,7 @@ interface RatingStarsProps {
   userId?: string;
   averageRating: number;
   userRating?: number;
+  hasRated?: boolean;
   onRate?: (rating: number) => void;
   readonly?: boolean;
 }
@@ -16,6 +17,7 @@ export default function RatingStars({
   userId,
   averageRating,
   userRating,
+  hasRated: hasRatedProp,
   onRate,
   readonly = false
 }: RatingStarsProps) {
@@ -23,7 +25,7 @@ export default function RatingStars({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleClick = async (rating: number) => {
-    if (readonly || userRating || !userId || isSubmitting) return;
+    if (readonly || hasRated || !userId || isSubmitting) return;
 
     setIsSubmitting(true);
     if (onRate) {
@@ -32,7 +34,8 @@ export default function RatingStars({
     setIsSubmitting(false);
   };
 
-  const hasRated = !!userRating;
+  // hasRated can be passed explicitly (PostCard) or derived from userRating (post detail page)
+  const hasRated = hasRatedProp !== undefined ? hasRatedProp : !!userRating;
   const isDisabled = readonly || hasRated || !userId;
 
   // Before rating: show hover state or empty stars. After rating: show average.
