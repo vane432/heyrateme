@@ -20,6 +20,9 @@ export default function ProfilePage() {
   const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null);
+  const [followModalUsers, setFollowModalUsers] = useState<any[]>([]);
+  const [followModalLoading, setFollowModalLoading] = useState(false);
   const router = useRouter();
   const params = useParams();
   const username = params.username as string;
@@ -85,6 +88,21 @@ export default function ProfilePage() {
     navigator.clipboard.writeText('https://heyrate.me/' + username);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openFollowModal = async (type: 'followers' | 'following') => {
+    if (!profile?.user?.id) return;
+    setFollowModal(type);
+    setFollowModalUsers([]);
+    setFollowModalLoading(true);
+    try {
+      const res = await fetch(`/api/follow?user_id=${profile.user.id}&list=${type}`);
+      const json = await res.json();
+      setFollowModalUsers(json.users || []);
+    } catch {
+      setFollowModalUsers([]);
+    }
+    setFollowModalLoading(false);
   };
 
   const handleFollow = async () => {
@@ -360,13 +378,13 @@ export default function ProfilePage() {
           {/* Stats bar — Posts | Followers | Following | Ratings | Avg ★ */}
           <div className="grid grid-cols-5 py-4 border-t border-gray-100">
             {[
-              { label: 'Posts',     value: profile.postCount, gold: false },
-              { label: 'Followers', value: followersCount,    gold: false },
-              { label: 'Following', value: followingCount,    gold: false },
-              { label: 'Ratings',   value: totalRatings,      gold: false },
-              { label: 'Avg ★',    value: profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—', gold: true },
+              { label: 'Posts',     value: profile.postCount, gold: false, onClick: undefined },
+              { label: 'Followers', value: followersCount,    gold: false, onClick: () => openFollowModal('followers') },
+              { label: 'Following', value: followingCount,    gold: false, onClick: () => openFollowModal('following') },
+              { label: 'Ratings',   value: totalRatings,      gold: false, onClick: undefined },
+              { label: 'Avg ★',    value: profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—', gold: true, onClick: undefined },
             ].map(stat => (
-              <div key={stat.label} className="flex flex-col items-center text-center cursor-pointer hover:opacity-70 transition select-none">
+              <div key={stat.label} onClick={stat.onClick} className={`flex flex-col items-center text-center transition select-none ${stat.onClick ? 'cursor-pointer hover:opacity-70' : ''}`}>
                 <span className={`text-lg font-black leading-none ${stat.gold ? 'text-yellow-500' : 'text-gray-900'}`}>{stat.value}</span>
                 <span className="text-xs text-gray-400 mt-1 leading-none">{stat.label}</span>
               </div>
@@ -527,6 +545,46 @@ export default function ProfilePage() {
       )}
 
       <div className="h-28" />
+
+      {/* ─── Followers / Following Modal ─── */}
+      {followModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setFollowModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h2 className="font-bold text-gray-900 text-lg capitalize">{followModal}</h2>
+              <button onClick={() => setFollowModal(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div className="overflow-y-auto flex-1 py-2">
+              {followModalLoading ? (
+                <div className="flex justify-center py-10 text-gray-400 text-sm">Loading…</div>
+              ) : followModalUsers.length === 0 ? (
+                <div className="flex justify-center py-10 text-gray-400 text-sm">No {followModal} yet</div>
+              ) : (
+                followModalUsers.map((u: any) => (
+                  <Link
+                    key={u.id}
+                    href={`/${u.username}`}
+                    onClick={() => setFollowModal(null)}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition"
+                  >
+                    {u.avatar_url ? (
+                      <Image src={u.avatar_url} alt={u.username} width={40} height={40} className="rounded-full object-cover w-10 h-10" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm">
+                        {(u.display_name || u.username || '?')[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{u.display_name || u.username}</p>
+                      <p className="text-xs text-gray-400">@{u.username}</p>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -82,18 +82,38 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// Get follow stats for a user
+// Get follow stats or list for a user
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('user_id');
     const currentUserId = searchParams.get('current_user_id');
+    const list = searchParams.get('list'); // 'followers' | 'following'
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
     }
 
     const client = getClient();
+
+    // Return list of followers or following with user info
+    if (list === 'followers') {
+      const { data, error } = await client
+        .from('follows')
+        .select('users!follows_follower_id_fkey(id, username, display_name, avatar_url)')
+        .eq('following_id', userId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ users: (data || []).map((r: any) => r.users) });
+    }
+
+    if (list === 'following') {
+      const { data, error } = await client
+        .from('follows')
+        .select('users!follows_following_id_fkey(id, username, display_name, avatar_url)')
+        .eq('follower_id', userId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ users: (data || []).map((r: any) => r.users) });
+    }
 
     // Get followers count
     const { count: followersCount } = await client
