@@ -5,7 +5,7 @@ import Image from 'next/image';
 import RatingStars from './RatingStars';
 import type { PostWithUser } from '@/lib/types';
 import { submitRating } from '@/lib/queries';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 interface PostCardProps {
@@ -20,11 +20,11 @@ export default function PostCard({ post, onRatingUpdate }: PostCardProps) {
   const [userId, setUserId] = useState<string | undefined>();
 
   // Get user ID on mount
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUserId(user?.id);
     });
-  });
+  }, []);
 
   const handleRate = async (rating: number) => {
     if (!userId) return;

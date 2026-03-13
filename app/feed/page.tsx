@@ -37,7 +37,7 @@ export default function HomePage() {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const data = await getFeedPosts(selectedCategory || undefined);
+      const data = await getFeedPosts(selectedCategory || undefined, user?.id);
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);

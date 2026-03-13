@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 import type { PostWithUser } from './types';
 
 // Get all posts for home feed with user info and ratings
-export async function getFeedPosts(category?: string) {
+export async function getFeedPosts(category?: string, userId?: string) {
   let query = supabase
     .from('posts')
     .select(`
@@ -37,11 +37,16 @@ export async function getFeedPosts(category?: string) {
         ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
+      const userRating = userId
+        ? (ratings?.find((r: any) => r.user_id === userId))?.rating
+        : undefined;
+
       return {
         ...post,
         users: post.users,
         average_rating: averageRating,
-        rating_count: ratingCount
+        rating_count: ratingCount,
+        user_rating: userRating,
       } as PostWithUser;
     })
   );
