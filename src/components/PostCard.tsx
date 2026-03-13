@@ -31,17 +31,13 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     try {
       await submitRating(post.id, userId, rating);
       
-      // Update local state
+      // Update local state — no need to reload the whole feed
       const newCount = ratingCount + 1;
       const newAverage = (currentRating * ratingCount + rating) / newCount;
       
       setCurrentRating(newAverage);
       setRatingCount(newCount);
       setUserRating(rating);
-
-      if (onRatingUpdate) {
-        onRatingUpdate();
-      }
     } catch (error: any) {
       alert(error.message);
     }
