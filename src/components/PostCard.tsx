@@ -163,6 +163,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             userRatingCreatedAt={userRatingCreatedAt}
             hasRated={hasRated}
             onRate={handleRate}
+            isOwner={isOwner}
           />
           <p className="text-xs text-gray-500 mt-1">
             {hasRated

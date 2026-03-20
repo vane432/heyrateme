@@ -177,6 +177,7 @@ export default function PostPage() {
                 userRating={post.user_rating}
                 userRatingCreatedAt={post.user_rating_created_at}
                 onRate={handleRate}
+                isOwner={user && post.user_id === user.id}
               />
               <p className="text-sm text-gray-500 mt-2">
                 {post.user_rating

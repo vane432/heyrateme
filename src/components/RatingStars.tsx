@@ -12,6 +12,7 @@ interface RatingStarsProps {
   hasRated?: boolean;
   onRate?: (rating: number) => void;
   readonly?: boolean;
+  isOwner?: boolean;
 }
 
 export default function RatingStars({
@@ -22,7 +23,8 @@ export default function RatingStars({
   userRatingCreatedAt,
   hasRated: hasRatedProp,
   onRate,
-  readonly = false
+  readonly = false,
+  isOwner = false
 }: RatingStarsProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,13 +70,14 @@ export default function RatingStars({
   const isDisabled = readonly || !userId || (hasRated && !canEdit);
 
   // Before rating: show hover state or empty stars. After rating: show average.
+  // Post owners can always see their post's ratings
   const displayRating = readonly
     ? averageRating
-    : hasRated && !canEdit
+    : (hasRated || isOwner) && !canEdit
       ? averageRating
       : canEdit && hoverRating > 0
         ? hoverRating
-        : hasRated
+        : hasRated || isOwner
           ? averageRating
           : hoverRating;
 
@@ -89,7 +92,7 @@ export default function RatingStars({
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => {
         const isFilled = star <= Math.round(displayRating);
-        const isPartialFilled = !hasRated ? false : (star === Math.ceil(displayRating) && displayRating % 1 !== 0);
+        const isPartialFilled = !(hasRated || isOwner) ? false : (star === Math.ceil(displayRating) && displayRating % 1 !== 0);
 
         return (
           <button
@@ -113,7 +116,7 @@ export default function RatingStars({
       <span className="ml-2 text-sm text-gray-600">
         {readonly
           ? (averageRating > 0 ? averageRating.toFixed(1) : 'No ratings yet')
-          : hasRated
+          : hasRated || isOwner
             ? averageRating.toFixed(1)
             : userId
               ? <span className="text-gray-400 italic">Rate to see score</span>
