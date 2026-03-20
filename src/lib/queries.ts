@@ -380,6 +380,29 @@ export async function submitRating(
     .single();
 
   if (error) throw error;
+
+  // Create notification for post owner (if not self-rating)
+  try {
+    const { data: post } = await supabase
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    if (post && post.user_id !== userId) {
+      await supabase.from('notifications').insert({
+        user_id: post.user_id,
+        type: 'post_rated',
+        actor_id: userId,
+        post_id: postId,
+        rating_value: rating
+      });
+    }
+  } catch (notifError) {
+    // Don't fail the rating if notification fails
+    console.error('Failed to create notification:', notifError);
+  }
+
   return data;
 }
 
@@ -555,4 +578,118 @@ export async function getAdminStats() {
     totalRatings: totalRatings || 0,
     totalStorageMB
   };
+}
+
+// Submit a report
+export async function submitReport(
+  postId: string,
+  reporterId: string,
+  reason: string,
+  details?: string
+) {
+  // Check if user already reported this post
+  const { data: existing } = await supabase
+    .from('reports')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('reporter_id', reporterId)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error('You have already reported this post');
+  }
+
+  const { data, error } = await supabase
+    .from('reports')
+    .insert({
+      post_id: postId,
+      reporter_id: reporterId,
+      reason,
+      details: details || null
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Get notifications for a user
+export async function getNotifications(userId: string, limit = 20) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select(`
+      *,
+      actor:users!actor_id (
+        username,
+        avatar_url
+      ),
+      post:posts (
+        image_url,
+        caption
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+}
+
+// Get unread notification count
+export async function getUnreadNotificationCount(userId: string) {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_read', false);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// Mark notifications as read
+export async function markNotificationsRead(userId: string, notificationIds?: string[]) {
+  let query = supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', userId);
+
+  if (notificationIds && notificationIds.length > 0) {
+    query = query.in('id', notificationIds);
+  }
+
+  const { error } = await query;
+  if (error) throw error;
+}
+
+// Get pending reports for admin
+export async function getPendingReports() {
+  const { data, error } = await supabase
+    .from('reports')
+    .select(`
+      *,
+      post:posts (
+        id,
+        image_url,
+        caption,
+        category,
+        media_type,
+        user_id,
+        users (
+          username,
+          avatar_url
+        )
+      ),
+      reporter:users!reporter_id (
+        username,
+        avatar_url
+      )
+    `)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
 }

@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import RatingStars from './RatingStars';
-import type { PostWithUser } from '@/lib/types';
-import { submitRating } from '@/lib/queries';
+import PostMenu from './PostMenu';
+import ReportModal from './ReportModal';
+import type { PostWithUser, ReportReason } from '@/lib/types';
+import { submitRating, submitReport } from '@/lib/queries';
 import { useState, useEffect } from 'react';
 
 interface PostCardProps {
@@ -18,6 +20,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [ratingCount, setRatingCount] = useState(post.rating_count);
   const [userRating, setUserRating] = useState(post.user_rating);
   const [hasRated, setHasRated] = useState(!!post.user_rating);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
@@ -32,11 +36,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
     try {
       await submitRating(post.id, userId, rating);
-      
+
       // Update local state — no need to reload the whole feed
       const newCount = ratingCount + 1;
       const newAverage = (currentRating * ratingCount + rating) / newCount;
-      
+
       setCurrentRating(newAverage);
       setRatingCount(newCount);
       setUserRating(rating);
@@ -45,6 +49,19 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       alert(error.message);
     }
   };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReport = async (reason: ReportReason, details?: string) => {
+    if (!userId) throw new Error('You must be logged in to report');
+    await submitReport(post.id, userId, reason, details);
+  };
+
+  const isOwner = userId === post.user_id;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
@@ -65,7 +82,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             </div>
           )}
         </div>
-        <div>
+        <div className="flex-1">
           <Link
             href={`/${post.users.username}`}
             className="font-semibold text-gray-900 hover:underline"
@@ -74,6 +91,16 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           </Link>
           <p className="text-xs text-gray-500">{post.category}</p>
         </div>
+
+        {/* Post Menu */}
+        {userId && (
+          <PostMenu
+            postId={post.id}
+            isOwner={isOwner}
+            onReport={() => setShowReportModal(true)}
+            onCopyLink={handleCopyLink}
+          />
+        )}
       </div>
 
       {/* Media - conditional video/image */}
@@ -146,6 +173,15 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           {new Date(post.created_at).toLocaleDateString()}
         </p>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <ReportModal
+          postId={post.id}
+          onClose={() => setShowReportModal(false)}
+          onSubmit={handleReport}
+        />
+      )}
     </div>
   );
 }

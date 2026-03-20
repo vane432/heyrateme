@@ -137,3 +137,44 @@ export const CATEGORIES = [
 ] as const
 
 export type Category = typeof CATEGORIES[number]
+
+// Report types
+export const REPORT_REASONS = ['inappropriate', 'spam', 'harassment', 'other'] as const;
+export type ReportReason = typeof REPORT_REASONS[number];
+
+export interface Report {
+  id: string;
+  post_id: string;
+  reporter_id: string;
+  reason: ReportReason;
+  details: string | null;
+  status: 'pending' | 'dismissed' | 'actioned';
+  created_at: string;
+  // Joined data
+  post?: Post & { users: User };
+  reporter?: User;
+}
+
+// Notification types
+export const NOTIFICATION_TYPES = ['new_follower', 'post_rated'] as const;
+export type NotificationType = typeof NOTIFICATION_TYPES[number];
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  actor_id: string;
+  post_id: string | null;
+  rating_value: number | null;
+  is_read: boolean;
+  created_at: string;
+  // Joined data
+  actor?: {
+    username: string;
+    avatar_url: string | null;
+  };
+  post?: {
+    image_url: string;
+    caption: string;
+  };
+}

@@ -49,6 +49,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Create notification for the person being followed
+    try {
+      await client.from('notifications').insert({
+        user_id: following_id,
+        type: 'new_follower',
+        actor_id: follower_id
+      });
+    } catch (notifError) {
+      // Don't fail the follow if notification fails
+      console.error('[follow] notification error:', notifError);
+    }
+
     return NextResponse.json({ action: 'followed' });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
