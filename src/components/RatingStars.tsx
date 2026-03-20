@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { canEditRating, getRatingEditTimeRemaining } from '@/lib/queries';
 
 interface RatingStarsProps {
   postId: string;
   userId?: string;
   averageRating: number;
   userRating?: number;
+  userRatingCreatedAt?: string;
   hasRated?: boolean;
   onRate?: (rating: number) => void;
   readonly?: boolean;
@@ -17,15 +19,43 @@ export default function RatingStars({
   userId,
   averageRating,
   userRating,
+  userRatingCreatedAt,
   hasRated: hasRatedProp,
   onRate,
   readonly = false
 }: RatingStarsProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editTimeRemaining, setEditTimeRemaining] = useState(0);
+
+  // hasRated can be passed explicitly (PostCard) or derived from userRating (post detail page)
+  const hasRated = hasRatedProp !== undefined ? hasRatedProp : !!userRating;
+
+  // Check if user can still edit their rating
+  const canEdit = hasRated && userRatingCreatedAt && canEditRating(userRatingCreatedAt);
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!canEdit || !userRatingCreatedAt) {
+      setEditTimeRemaining(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const remaining = getRatingEditTimeRemaining(userRatingCreatedAt);
+      setEditTimeRemaining(remaining);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [canEdit, userRatingCreatedAt]);
 
   const handleClick = async (rating: number) => {
-    if (readonly || hasRated || !userId || isSubmitting) return;
+    if (readonly || !userId || isSubmitting) return;
+    // Allow rating if not rated yet, or if within edit window
+    if (hasRated && !canEdit) return;
 
     setIsSubmitting(true);
     if (onRate) {
@@ -34,16 +64,26 @@ export default function RatingStars({
     setIsSubmitting(false);
   };
 
-  // hasRated can be passed explicitly (PostCard) or derived from userRating (post detail page)
-  const hasRated = hasRatedProp !== undefined ? hasRatedProp : !!userRating;
-  const isDisabled = readonly || hasRated || !userId;
+  // Can interact if: not readonly, has user, and (hasn't rated OR can edit)
+  const isDisabled = readonly || !userId || (hasRated && !canEdit);
 
   // Before rating: show hover state or empty stars. After rating: show average.
   const displayRating = readonly
     ? averageRating
-    : hasRated
+    : hasRated && !canEdit
       ? averageRating
-      : hoverRating;
+      : canEdit && hoverRating > 0
+        ? hoverRating
+        : hasRated
+          ? averageRating
+          : hoverRating;
+
+  // Format remaining time as m:ss
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -83,6 +123,11 @@ export default function RatingStars({
       {hasRated && (
         <span className="ml-2 text-xs text-gray-500">
           (You: {userRating}★)
+        </span>
+      )}
+      {canEdit && editTimeRemaining > 0 && (
+        <span className="ml-2 text-xs text-purple-600 font-medium">
+          Edit: {formatTime(editTimeRemaining)}
         </span>
       )}
     </div>

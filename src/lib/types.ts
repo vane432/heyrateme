@@ -124,6 +124,7 @@ export type PostWithUser = Post & {
   average_rating: number
   rating_count: number
   user_rating?: number
+  user_rating_created_at?: string
 }
 
 export const CATEGORIES = [

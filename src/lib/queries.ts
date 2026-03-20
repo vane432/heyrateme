@@ -29,7 +29,7 @@ export async function getFeedPosts(category?: string, userId?: string) {
     (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
-        .select('rating, user_id')
+        .select('rating, user_id, created_at')
         .eq('post_id', post.id);
 
       const ratingCount = ratings?.length || 0;
@@ -37,8 +37,8 @@ export async function getFeedPosts(category?: string, userId?: string) {
         ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
-      const userRating = userId
-        ? (ratings?.find((r: any) => r.user_id === userId))?.rating
+      const userRatingData = userId
+        ? ratings?.find((r: any) => r.user_id === userId)
         : undefined;
 
       return {
@@ -46,7 +46,8 @@ export async function getFeedPosts(category?: string, userId?: string) {
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
-        user_rating: userRating,
+        user_rating: userRatingData?.rating,
+        user_rating_created_at: userRatingData?.created_at,
       } as PostWithUser;
     })
   );
@@ -74,7 +75,7 @@ export async function getPostById(postId: string, userId?: string) {
   // Get ratings
   const { data: ratings } = await supabase
     .from('ratings')
-    .select('rating, user_id')
+    .select('rating, user_id, created_at')
     .eq('post_id', postId);
 
   const ratingCount = ratings?.length || 0;
@@ -83,8 +84,8 @@ export async function getPostById(postId: string, userId?: string) {
     : 0;
 
   // Check if user has already rated
-  const userRating = userId
-    ? (ratings?.find((r: any) => r.user_id === userId) as any)?.rating
+  const userRatingData = userId
+    ? ratings?.find((r: any) => r.user_id === userId)
     : undefined;
 
   return {
@@ -92,7 +93,8 @@ export async function getPostById(postId: string, userId?: string) {
     users: post.users,
     average_rating: averageRating,
     rating_count: ratingCount,
-    user_rating: userRating
+    user_rating: userRatingData?.rating,
+    user_rating_created_at: userRatingData?.created_at
   } as PostWithUser;
 }
 
@@ -351,7 +353,25 @@ export async function deletePost(postId: string, userId: string) {
   if (deleteError) throw deleteError;
 }
 
-// Submit a rating
+// Grace period for editing ratings (10 minutes in milliseconds)
+const RATING_EDIT_GRACE_PERIOD_MS = 10 * 60 * 1000;
+
+// Check if a rating can be edited (within grace period)
+export function canEditRating(ratingCreatedAt: string): boolean {
+  const createdTime = new Date(ratingCreatedAt).getTime();
+  const now = Date.now();
+  return now - createdTime < RATING_EDIT_GRACE_PERIOD_MS;
+}
+
+// Get remaining time to edit a rating (in seconds)
+export function getRatingEditTimeRemaining(ratingCreatedAt: string): number {
+  const createdTime = new Date(ratingCreatedAt).getTime();
+  const expiresAt = createdTime + RATING_EDIT_GRACE_PERIOD_MS;
+  const remaining = Math.max(0, expiresAt - Date.now());
+  return Math.ceil(remaining / 1000);
+}
+
+// Submit a rating (or update if within grace period)
 export async function submitRating(
   postId: string,
   userId: string,
@@ -360,13 +380,27 @@ export async function submitRating(
   // Check if user has already rated
   const { data: existingRating } = await supabase
     .from('ratings')
-    .select('id')
+    .select('id, created_at')
     .eq('post_id', postId)
     .eq('user_id', userId)
     .single();
 
   if (existingRating) {
-    throw new Error('You have already rated this post');
+    // Check if within grace period
+    if (canEditRating(existingRating.created_at)) {
+      // Update the existing rating
+      const { data, error } = await supabase
+        .from('ratings')
+        .update({ rating })
+        .eq('id', existingRating.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { ...data, isUpdate: true };
+    } else {
+      throw new Error('Rating can no longer be changed (10 minute edit window has passed)');
+    }
   }
 
   const { data, error } = await supabase
@@ -381,7 +415,7 @@ export async function submitRating(
 
   if (error) throw error;
 
-  // Create notification for post owner (if not self-rating)
+  // Create notification for post owner (if not self-rating, and only for new ratings)
   try {
     const { data: post } = await supabase
       .from('posts')

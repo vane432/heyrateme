@@ -51,6 +51,7 @@ export default function PostPage() {
 
     try {
       await submitRating(postId, user.id, rating);
+      // Always reload the post to get fresh data including updated timestamps
       await loadPost(user.id);
     } catch (error: any) {
       alert(error.message);
@@ -174,6 +175,7 @@ export default function PostPage() {
                 userId={user?.id}
                 averageRating={post.average_rating}
                 userRating={post.user_rating}
+                userRatingCreatedAt={post.user_rating_created_at}
                 onRate={handleRate}
               />
               <p className="text-sm text-gray-500 mt-2">

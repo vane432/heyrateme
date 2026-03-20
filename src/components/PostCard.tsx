@@ -19,6 +19,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [currentRating, setCurrentRating] = useState(post.average_rating);
   const [ratingCount, setRatingCount] = useState(post.rating_count);
   const [userRating, setUserRating] = useState(post.user_rating);
+  const [userRatingCreatedAt, setUserRatingCreatedAt] = useState(post.user_rating_created_at);
   const [hasRated, setHasRated] = useState(!!post.user_rating);
   const [showReportModal, setShowReportModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -28,23 +29,36 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     setCurrentRating(post.average_rating);
     setRatingCount(post.rating_count);
     setUserRating(post.user_rating);
+    setUserRatingCreatedAt(post.user_rating_created_at);
     setHasRated(!!post.user_rating);
-  }, [post.average_rating, post.rating_count, post.user_rating]);
+  }, [post.average_rating, post.rating_count, post.user_rating, post.user_rating_created_at]);
 
   const handleRate = async (rating: number) => {
     if (!userId) return;
 
     try {
-      await submitRating(post.id, userId, rating);
+      const result = await submitRating(post.id, userId, rating);
 
-      // Update local state — no need to reload the whole feed
-      const newCount = ratingCount + 1;
-      const newAverage = (currentRating * ratingCount + rating) / newCount;
+      if (result.isUpdate) {
+        // Editing existing rating - recalculate average
+        const oldUserRating = userRating || 0;
+        const newAverage = ratingCount > 0
+          ? (currentRating * ratingCount - oldUserRating + rating) / ratingCount
+          : rating;
 
-      setCurrentRating(newAverage);
-      setRatingCount(newCount);
-      setUserRating(rating);
-      setHasRated(true);
+        setCurrentRating(newAverage);
+        setUserRating(rating);
+      } else {
+        // New rating
+        const newCount = ratingCount + 1;
+        const newAverage = (currentRating * ratingCount + rating) / newCount;
+
+        setCurrentRating(newAverage);
+        setRatingCount(newCount);
+        setUserRating(rating);
+        setUserRatingCreatedAt(new Date().toISOString());
+        setHasRated(true);
+      }
     } catch (error: any) {
       alert(error.message);
     }
@@ -146,6 +160,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             userId={userId}
             averageRating={currentRating}
             userRating={userRating}
+            userRatingCreatedAt={userRatingCreatedAt}
             hasRated={hasRated}
             onRate={handleRate}
           />
