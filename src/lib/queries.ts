@@ -224,20 +224,87 @@ export async function getTopPosts() {
     .slice(0, 5);
 }
 
+// Check if user has exceeded daily post limit (3 posts per 24 hours)
+export async function checkRateLimit(userId: string): Promise<{
+  allowed: boolean;
+  postsToday: number;
+  limit: number
+}> {
+  const DAILY_LIMIT = 3;
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { count, error } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', twentyFourHoursAgo);
+
+  if (error) throw error;
+
+  return {
+    allowed: (count || 0) < DAILY_LIMIT,
+    postsToday: count || 0,
+    limit: DAILY_LIMIT
+  };
+}
+
+// Upload video to Supabase storage (no transcoding - keep original format)
+export async function uploadVideo(file: File, userId: string): Promise<string> {
+  const ext = file.name.split('.').pop() || 'mp4';
+  const fileName = `${userId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('posts')
+    .upload(fileName, file, { contentType: file.type });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('posts')
+    .getPublicUrl(fileName);
+
+  return publicUrl;
+}
+
+// Get video duration from file for storage
+export function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      resolve(Math.round(video.duration));
+    };
+
+    video.onerror = () => {
+      reject(new Error('Failed to load video metadata'));
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 // Create a new post
 export async function createPost(
   userId: string,
-  imageUrl: string,
+  mediaUrl: string,
   caption: string,
-  category: string
+  category: string,
+  mediaType: 'image' | 'video' = 'image',
+  durationSeconds?: number,
+  fileSizeBytes?: number
 ) {
   const { data, error } = await supabase
     .from('posts')
     .insert({
       user_id: userId,
-      image_url: imageUrl,
+      image_url: mediaUrl,  // Field name stays same for backward compatibility
       caption,
-      category
+      category,
+      media_type: mediaType,
+      duration_seconds: durationSeconds || null,
+      file_size_bytes: fileSizeBytes || null
     })
     .select()
     .single();

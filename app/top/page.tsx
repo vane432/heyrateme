@@ -69,14 +69,29 @@ export default function TopPage() {
                 {index + 1}
               </div>
 
-              {/* Image */}
+              {/* Media Thumbnail */}
               <div className="flex-shrink-0 w-24 h-24 relative rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={post.image_url}
-                  alt={post.caption}
-                  fill
-                  className="object-cover"
-                />
+                {post.media_type === 'video' ? (
+                  <>
+                    <video
+                      src={post.image_url}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <Image
+                    src={post.image_url}
+                    alt={post.caption}
+                    fill
+                    className="object-cover"
+                  />
+                )}
               </div>
 
               {/* Details */}

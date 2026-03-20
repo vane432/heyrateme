@@ -76,15 +76,37 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         </div>
       </div>
 
-      {/* Image */}
+      {/* Media - conditional video/image */}
       <Link href={`/post/${post.id}`}>
         <div className="relative w-full aspect-square bg-gray-100">
-          <Image
-            src={post.image_url}
-            alt={post.caption}
-            fill
-            className="object-cover"
-          />
+          {post.media_type === 'video' ? (
+            <video
+              src={post.image_url}
+              className="w-full h-full object-cover"
+              muted
+              playsInline
+              loop
+              onMouseEnter={(e) => e.currentTarget.play()}
+              onMouseLeave={(e) => {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0;
+              }}
+            />
+          ) : (
+            <Image
+              src={post.image_url}
+              alt={post.caption}
+              fill
+              className="object-cover"
+            />
+          )}
+
+          {/* Duration badge for videos */}
+          {post.media_type === 'video' && post.duration_seconds && (
+            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+              {Math.floor(post.duration_seconds / 60)}:{String(post.duration_seconds % 60).padStart(2, '0')}
+            </div>
+          )}
         </div>
       </Link>
 

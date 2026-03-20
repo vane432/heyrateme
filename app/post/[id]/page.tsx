@@ -75,14 +75,22 @@ export default function PostPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="md:flex">
-          {/* Image */}
+          {/* Media */}
           <div className="md:w-2/3 relative aspect-square bg-gray-100">
-            <Image
-              src={post.image_url}
-              alt={post.caption}
-              fill
-              className="object-contain"
-            />
+            {post.media_type === 'video' ? (
+              <video
+                src={post.image_url}
+                controls
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <Image
+                src={post.image_url}
+                alt={post.caption}
+                fill
+                className="object-contain"
+              />
+            )}
           </div>
 
           {/* Details */}

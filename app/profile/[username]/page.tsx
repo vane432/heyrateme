@@ -459,13 +459,29 @@ export default function ProfilePage() {
             <div className="grid grid-cols-3 gap-px bg-gray-200 mt-2">
               {profile.posts.map((post: any) => (
                 <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-gray-100 overflow-hidden group">
-                  <Image
-                    src={post.image_url}
-                    alt={post.caption}
-                    fill
-                    sizes="(max-width: 768px) 33vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+                  {post.media_type === 'video' ? (
+                    <>
+                      <video
+                        src={post.image_url}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute top-2 right-2 z-10 bg-black/60 text-white rounded-full p-1.5">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </>
+                  ) : (
+                    <Image
+                      src={post.image_url}
+                      alt={post.caption}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  )}
                   {post.id === topPost?.id && profile.postCount > 1 && (
                     <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-yellow-900 text-xs font-black px-2 py-0.5 rounded-full shadow-md">
                       TOP ★
@@ -501,7 +517,18 @@ export default function ProfilePage() {
               ratedPosts.map((post: any, index: number) => (
                 <Link key={post.id} href={`/post/${post.id}`} className="flex gap-4 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 group border border-gray-50">
                   <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
-                    <Image src={post.image_url} alt={post.caption} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {post.media_type === 'video' ? (
+                      <>
+                        <video src={post.image_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" muted />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </>
+                    ) : (
+                      <Image src={post.image_url} alt={post.caption} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">

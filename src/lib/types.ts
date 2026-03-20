@@ -58,6 +58,9 @@ export interface Database {
           caption: string
           category: string
           created_at: string
+          media_type: 'image' | 'video'
+          duration_seconds: number | null
+          file_size_bytes: number | null
         }
         Insert: {
           id?: string
@@ -66,6 +69,9 @@ export interface Database {
           caption: string
           category: string
           created_at?: string
+          media_type?: 'image' | 'video'
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
         }
         Update: {
           id?: string
@@ -74,6 +80,9 @@ export interface Database {
           caption?: string
           category?: string
           created_at?: string
+          media_type?: 'image' | 'video'
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
         }
       }
       ratings: {
@@ -106,6 +115,9 @@ export interface Database {
 export type User = Database['public']['Tables']['users']['Row']
 export type Post = Database['public']['Tables']['posts']['Row']
 export type Rating = Database['public']['Tables']['ratings']['Row']
+
+export const MEDIA_TYPES = ['image', 'video'] as const;
+export type MediaType = typeof MEDIA_TYPES[number];
 
 export type PostWithUser = Post & {
   users: User
