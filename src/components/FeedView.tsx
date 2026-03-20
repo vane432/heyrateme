@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { getFeedPosts } from '@/lib/queries';
 import PostCard from '@/components/PostCard';
 import CategoryFilter from '@/components/CategoryFilter';
+import NotificationBell from '@/components/NotificationBell';
 import type { PostWithUser } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -67,6 +68,10 @@ export default function FeedView() {
             <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:opacity-90 transition">
               + Post
             </Link>
+
+            {/* Notification Bell */}
+            {userId && <NotificationBell userId={userId} />}
+
             {userProfile?.username && (
               <Link href={`/profile/${userProfile.username}`} className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition">
                 {userProfile.avatar_url ? (
