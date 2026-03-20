@@ -166,7 +166,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             isOwner={isOwner}
           />
           <p className="text-xs text-gray-500 mt-1">
-            {hasRated
+            {hasRated || isOwner
               ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
               : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
             }

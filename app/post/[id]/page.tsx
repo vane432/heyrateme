@@ -180,7 +180,7 @@ export default function PostPage() {
                 isOwner={user && post.user_id === user.id}
               />
               <p className="text-sm text-gray-500 mt-2">
-                {post.user_rating
+                {(post.user_rating || (user && post.user_id === user.id))
                   ? `${post.rating_count} ${post.rating_count === 1 ? 'rating' : 'ratings'}`
                   : ''}
               </p>
