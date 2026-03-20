@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getPostById } from '@/lib/queries';
+import { getPostById, deletePost } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
 import RatingStars from '@/components/RatingStars';
@@ -14,6 +14,8 @@ export default function PostPage() {
   const [post, setPost] = useState<PostWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const params = useParams();
   const postId = params.id as string;
@@ -52,6 +54,19 @@ export default function PostPage() {
       await loadPost(user.id);
     } catch (error: any) {
       alert(error.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user || !post) return;
+
+    setIsDeleting(true);
+    try {
+      await deletePost(postId, user.id);
+      router.push(`/${post.users.username}`); // Redirect to user profile
+    } catch (error: any) {
+      alert(error.message);
+      setIsDeleting(false);
     }
   };
 
@@ -112,7 +127,7 @@ export default function PostPage() {
                   </div>
                 )}
               </div>
-              <div>
+              <div className="flex-1">
                 <Link
                   href={`/${post.users.username}`}
                   className="font-semibold text-gray-900 hover:underline"
@@ -121,6 +136,19 @@ export default function PostPage() {
                 </Link>
                 <p className="text-sm text-gray-500">{post.category}</p>
               </div>
+
+              {/* Delete button (only for post owner) */}
+              {user && post.user_id === user.id && (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-red-600 hover:text-red-700 text-sm"
+                  title="Delete post"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Caption */}
@@ -164,6 +192,34 @@ export default function PostPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Post?</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              This action cannot be undone. Your post and all its ratings will be permanently deleted.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

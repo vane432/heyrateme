@@ -7,7 +7,7 @@ export const MAX_VIDEO_DURATION = 5 * 60; // 5 minutes in seconds
 
 // Caption limits
 export const MAX_CAPTION_LENGTH = 500;
-export const MAX_URL_COUNT = 2;
+export const MAX_URL_COUNT = 1;
 
 // Supported file types
 export const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -112,7 +112,7 @@ export function validateCaption(caption: string): ValidationError | null {
   if (urls.length > MAX_URL_COUNT) {
     return {
       field: 'caption',
-      message: `Maximum ${MAX_URL_COUNT} links allowed per post`
+      message: `Only 1 link allowed per post`
     };
   }
 
