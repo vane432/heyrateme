@@ -358,14 +358,24 @@ const RATING_EDIT_GRACE_PERIOD_MS = 10 * 60 * 1000;
 
 // Check if a rating can be edited (within grace period)
 export function canEditRating(ratingCreatedAt: string): boolean {
+  if (!ratingCreatedAt) return false;
+
   const createdTime = new Date(ratingCreatedAt).getTime();
+  // Safari-safe: check if date parsing failed
+  if (isNaN(createdTime)) return false;
+
   const now = Date.now();
   return now - createdTime < RATING_EDIT_GRACE_PERIOD_MS;
 }
 
 // Get remaining time to edit a rating (in seconds)
 export function getRatingEditTimeRemaining(ratingCreatedAt: string): number {
+  if (!ratingCreatedAt) return 0;
+
   const createdTime = new Date(ratingCreatedAt).getTime();
+  // Safari-safe: check if date parsing failed
+  if (isNaN(createdTime)) return 0;
+
   const expiresAt = createdTime + RATING_EDIT_GRACE_PERIOD_MS;
   const remaining = Math.max(0, expiresAt - Date.now());
   return Math.ceil(remaining / 1000);
@@ -386,8 +396,8 @@ export async function submitRating(
     .single();
 
   if (existingRating) {
-    // Check if within grace period
-    if (canEditRating(existingRating.created_at)) {
+    // Only allow editing if we have a valid timestamp and within grace period
+    if (existingRating.created_at && canEditRating(existingRating.created_at)) {
       // Update the existing rating
       const { data, error } = await supabase
         .from('ratings')
@@ -399,7 +409,11 @@ export async function submitRating(
       if (error) throw error;
       return { ...data, isUpdate: true };
     } else {
-      throw new Error('Rating can no longer be changed (10 minute edit window has passed)');
+      // Don't mention time limit if there's no timestamp (old rating)
+      const message = existingRating.created_at
+        ? 'Rating can no longer be changed (10 minute edit window has passed)'
+        : 'You have already rated this post';
+      throw new Error(message);
     }
   }
 
