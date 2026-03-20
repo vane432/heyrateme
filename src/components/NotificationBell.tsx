@@ -13,11 +13,15 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
+  // DEBUG: Add console log to see if component is rendering
+  console.log('NotificationBell rendering with userId:', userId);
+
   // Fetch unread count on mount and poll every 30 seconds
   useEffect(() => {
     const fetchCount = async () => {
       try {
         const count = await getUnreadNotificationCount(userId);
+        console.log('Fetched notification count:', count); // DEBUG
         setUnreadCount(count);
       } catch (error) {
         console.error('Failed to fetch notification count:', error);
@@ -46,11 +50,13 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
   };
 
   return (
-    <div className="relative" ref={bellRef}>
+    <div className="relative bg-yellow-200 border-2 border-red-500" ref={bellRef}>
+      {/* DEBUG: Temporary styling to make it super visible */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
         aria-label="Notifications"
+        title={`NotificationBell - Count: ${unreadCount}`}
       >
         <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
