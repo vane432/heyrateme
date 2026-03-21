@@ -252,7 +252,7 @@ export default function ProfilePage() {
         <div className="max-w-3xl mx-auto px-4">
 
           {/* Avatar + action buttons row */}
-          <div className="flex items-end justify-between -mt-14 md:-mt-16 mb-3">
+          <div className="flex items-end justify-between -mt-12 md:-mt-14 mb-4">
             <div className="relative">
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-xl">
                 <div className="w-full h-full rounded-full overflow-hidden border-[3px] border-white">
@@ -272,19 +272,19 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="flex gap-2 pb-1">
+            <div className="flex gap-2 items-center mt-auto pb-2">
               {isOwnProfile ? (
                 <>
-                  <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-2 sm:px-5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition shadow-sm whitespace-nowrap">
+                  <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-md whitespace-nowrap">
                     + Post
                   </Link>
-                  <Link href="/edit-profile" className="border-2 border-gray-200 bg-white text-gray-700 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap">
+                  <Link href="/edit-profile" className="border border-gray-300 bg-white text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition whitespace-nowrap">
                     Edit
                   </Link>
                   <button
                     onClick={copyLink}
                     title="Share profile"
-                    className="border-2 border-gray-200 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
+                    className="border border-gray-300 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
                   >
                     {copied
                       ? <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -296,14 +296,14 @@ export default function ProfilePage() {
                 <>
                   <button
                     onClick={handleFollow}
-                    className={`px-4 py-2 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm whitespace-nowrap ${isFollowing ? 'border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm whitespace-nowrap ${isFollowing ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-md'}`}
                   >
                     {isFollowing ? '✓ Following' : 'Follow'}
                   </button>
                   <button
                     onClick={handleMessage}
                     disabled={messagingLoading}
-                    className="border-2 border-purple-500 bg-white text-purple-600 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-purple-50 transition whitespace-nowrap disabled:opacity-50 flex items-center gap-1"
+                    className="border border-purple-400 bg-white text-purple-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-purple-50 transition whitespace-nowrap disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                   <button
                     onClick={copyLink}
                     title="Share profile"
-                    className="border-2 border-gray-200 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
+                    className="border border-gray-300 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
                   >
                     {copied
                       ? <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
