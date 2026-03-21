@@ -252,7 +252,7 @@ export default function ProfilePage() {
         <div className="max-w-3xl mx-auto px-4">
 
           {/* Avatar + action buttons row */}
-          <div className="flex items-end justify-between -mt-12 md:-mt-14 mb-4">
+          <div className="flex items-end justify-between -mt-10 md:-mt-12 mb-4">
             <div className="relative">
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-xl">
                 <div className="w-full h-full rounded-full overflow-hidden border-[3px] border-white">
