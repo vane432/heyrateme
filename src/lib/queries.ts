@@ -2,6 +2,88 @@
 import { supabase } from './supabaseClient';
 import type { PostWithUser } from './types';
 
+// ─── Saves/Bookmarks ───
+
+// Save a post
+export async function savePost(userId: string, postId: string) {
+  const { error } = await supabase
+    .from('saves')
+    .insert({ user_id: userId, post_id: postId });
+
+  if (error && error.code !== '23505') throw error; // Ignore duplicate
+}
+
+// Unsave a post
+export async function unsavePost(userId: string, postId: string) {
+  const { error } = await supabase
+    .from('saves')
+    .delete()
+    .eq('user_id', userId)
+    .eq('post_id', postId);
+
+  if (error) throw error;
+}
+
+// Check if post is saved
+export async function isPostSaved(userId: string, postId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('saves')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('post_id', postId)
+    .maybeSingle();
+
+  return !!data;
+}
+
+// Get saved posts for a user
+export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
+  const { data: saves, error } = await supabase
+    .from('saves')
+    .select(`
+      post_id,
+      posts (
+        *,
+        users (
+          id,
+          username,
+          avatar_url
+        )
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Get ratings for all saved posts
+  const postsWithRatings = await Promise.all(
+    (saves || []).map(async (save: any) => {
+      const post = save.posts;
+      if (!post) return null;
+
+      const { data: ratings } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('post_id', post.id);
+
+      const ratingCount = ratings?.length || 0;
+      const averageRating = ratingCount > 0
+        ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
+        : 0;
+
+      return {
+        ...post,
+        users: post.users,
+        average_rating: averageRating,
+        rating_count: ratingCount,
+      } as PostWithUser;
+    })
+  );
+
+  return postsWithRatings.filter(Boolean) as PostWithUser[];
+}
+
 // Get all posts for home feed with user info and ratings
 export async function getFeedPosts(category?: string, userId?: string) {
   let query = supabase

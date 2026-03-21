@@ -3,16 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getUserProfile } from '@/lib/queries';
+import { getUserProfile, getSavedPosts } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { PostWithUser } from '@/lib/types';
 
-type Tab = 'posts' | 'top';
+type Tab = 'posts' | 'top' | 'saved';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [savedPosts, setSavedPosts] = useState<PostWithUser[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('posts');
   const [isFollowing, setIsFollowing] = useState(false);
@@ -433,6 +436,30 @@ export default function ProfilePage() {
               </svg>
               Top Rated
             </button>
+            {/* Saved tab - only visible on own profile */}
+            {isOwnProfile && (
+              <button
+                onClick={async () => {
+                  setActiveTab('saved');
+                  if (savedPosts.length === 0 && currentUser) {
+                    setSavedLoading(true);
+                    try {
+                      const posts = await getSavedPosts(currentUser.id);
+                      setSavedPosts(posts);
+                    } catch (error) {
+                      console.error('Failed to load saved posts:', error);
+                    }
+                    setSavedLoading(false);
+                  }
+                }}
+                className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'saved' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                Saved
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -553,6 +580,71 @@ export default function ProfilePage() {
               ))
             )}
           </div>
+        )}
+
+        {/* Saved posts grid - only visible on own profile */}
+        {activeTab === 'saved' && isOwnProfile && (
+          savedLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+            </div>
+          ) : savedPosts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 px-4">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-5xl mb-4">🔖</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No saved posts</h3>
+              <p className="text-gray-400 text-center text-sm max-w-xs">
+                Tap the bookmark icon on posts to save them here for later!
+              </p>
+              <Link href="/" className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 transition shadow-md">
+                Explore Posts
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-px bg-gray-200 mt-2">
+              {savedPosts.map((post: any) => (
+                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-gray-100 overflow-hidden group">
+                  {post.media_type === 'video' ? (
+                    <>
+                      <video
+                        src={post.image_url}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        muted
+                        playsInline
+                      />
+                      <div className="absolute top-2 right-2 z-10 bg-black/60 text-white rounded-full p-1.5">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </>
+                  ) : (
+                    <Image
+                      src={post.image_url}
+                      alt={post.caption}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  )}
+                  {/* Saved indicator */}
+                  <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white rounded-full p-1.5">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                  </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 z-10 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 p-2">
+                    <div className="flex items-center gap-1.5 text-white text-xl font-black">
+                      <span className="text-yellow-300">★</span>
+                      <span>{post.average_rating > 0 ? post.average_rating.toFixed(1) : '—'}</span>
+                    </div>
+                    {post.rating_count > 0 && <div className="text-gray-300 text-xs">{post.rating_count} ratings</div>}
+                    <p className="text-white/80 text-xs mt-1 text-center line-clamp-2 leading-tight">{post.caption}</p>
+                    <p className="text-purple-300 text-xs mt-1">@{post.users?.username}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
         )}
       </div>
 

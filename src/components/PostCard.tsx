@@ -6,7 +6,7 @@ import RatingStars from './RatingStars';
 import PostMenu from './PostMenu';
 import ReportModal from './ReportModal';
 import type { PostWithUser, ReportReason } from '@/lib/types';
-import { submitRating, submitReport } from '@/lib/queries';
+import { submitRating, submitReport, savePost, unsavePost, isPostSaved } from '@/lib/queries';
 import { useState, useEffect } from 'react';
 
 interface PostCardProps {
@@ -23,6 +23,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [hasRated, setHasRated] = useState(!!post.user_rating);
   const [showReportModal, setShowReportModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingInProgress, setSavingInProgress] = useState(false);
 
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
@@ -32,6 +34,31 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     setUserRatingCreatedAt(post.user_rating_created_at);
     setHasRated(!!post.user_rating);
   }, [post.average_rating, post.rating_count, post.user_rating, post.user_rating_created_at]);
+
+  // Check if post is saved on mount
+  useEffect(() => {
+    if (userId) {
+      isPostSaved(userId, post.id).then(setIsSaved).catch(() => {});
+    }
+  }, [userId, post.id]);
+
+  const handleSaveToggle = async () => {
+    if (!userId || savingInProgress) return;
+
+    setSavingInProgress(true);
+    try {
+      if (isSaved) {
+        await unsavePost(userId, post.id);
+        setIsSaved(false);
+      } else {
+        await savePost(userId, post.id);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error('Failed to save/unsave post:', error);
+    }
+    setSavingInProgress(false);
+  };
 
   const handleRate = async (rating: number) => {
     if (!userId) return;
@@ -153,24 +180,48 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
       {/* Content */}
       <div className="p-4">
-        {/* Rating */}
-        <div className="mb-3">
-          <RatingStars
-            postId={post.id}
-            userId={userId}
-            averageRating={currentRating}
-            userRating={userRating}
-            userRatingCreatedAt={userRatingCreatedAt}
-            hasRated={hasRated}
-            onRate={handleRate}
-            isOwner={isOwner}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {hasRated || isOwner
-              ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
-              : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
-            }
-          </p>
+        {/* Rating and Save row */}
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <RatingStars
+              postId={post.id}
+              userId={userId}
+              averageRating={currentRating}
+              userRating={userRating}
+              userRatingCreatedAt={userRatingCreatedAt}
+              hasRated={hasRated}
+              onRate={handleRate}
+              isOwner={isOwner}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {hasRated || isOwner
+                ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+                : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+              }
+            </p>
+          </div>
+
+          {/* Bookmark button */}
+          {userId && (
+            <button
+              onClick={handleSaveToggle}
+              disabled={savingInProgress}
+              className={`p-2 rounded-full transition-colors ${
+                isSaved ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title={isSaved ? 'Unsave post' : 'Save post'}
+            >
+              {isSaved ? (
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Caption */}
