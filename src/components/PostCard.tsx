@@ -119,11 +119,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
       {/* Media - conditional video/image */}
       <Link href={`/post/${post.id}`}>
-        <div className="relative w-full max-h-96 bg-gray-100 overflow-hidden">
+        <div className="relative w-full aspect-[4/5] bg-gray-100">
           {post.media_type === 'video' ? (
             <video
               src={post.image_url}
-              className="w-full h-full max-h-96 object-cover"
+              className="w-full h-full object-cover"
               muted
               playsInline
               loop
@@ -137,9 +137,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             <Image
               src={post.image_url}
               alt={post.caption}
-              width={600}
-              height={400}
-              className="w-full h-auto max-h-96 object-cover"
+              fill
+              className="object-cover"
             />
           )}
 
