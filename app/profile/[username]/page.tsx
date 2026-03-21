@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getUserProfile, getSavedPosts } from '@/lib/queries';
+import { getUserProfile, getSavedPosts, getOrCreateConversation } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { PostWithUser } from '@/lib/types';
@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null);
   const [followModalUsers, setFollowModalUsers] = useState<any[]>([]);
   const [followModalLoading, setFollowModalLoading] = useState(false);
+  const [messagingLoading, setMessagingLoading] = useState(false);
   const router = useRouter();
   const params = useParams();
   const username = params.username as string;
@@ -148,6 +149,22 @@ export default function ProfilePage() {
       console.error('Follow error:', err);
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  const handleMessage = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    if (messagingLoading || !profile) return;
+
+    setMessagingLoading(true);
+    try {
+      const conversationId = await getOrCreateConversation(currentUser.id, profile.user.id);
+      router.push(`/messages/${conversationId}`);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      alert('Failed to open conversation. Please try again.');
+    } finally {
+      setMessagingLoading(false);
     }
   };
 
@@ -303,9 +320,16 @@ export default function ProfilePage() {
                   >
                     {isFollowing ? '✓ Following' : 'Follow'}
                   </button>
-                  <Link href={currentUser ? '/' : '/login'} className="border-2 border-gray-200 bg-white text-gray-700 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-gray-50 transition whitespace-nowrap">
-                    Rate
-                  </Link>
+                  <button
+                    onClick={handleMessage}
+                    disabled={messagingLoading}
+                    className="border-2 border-purple-500 bg-white text-purple-600 px-3 py-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold hover:bg-purple-50 transition whitespace-nowrap disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="hidden sm:inline">Message</span>
+                  </button>
                 </>
               )}
             </div>

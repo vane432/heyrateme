@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { supabase } from './supabaseClient';
-import type { PostWithUser } from './types';
+import type { PostWithUser, ConversationWithDetails, MessageWithDetails } from './types';
 
 // ─── Saves/Bookmarks ───
 
@@ -838,4 +838,243 @@ export async function getPendingReports() {
 
   if (error) throw error;
   return data;
+}
+
+// ─── Messaging ───
+
+// Get or create a 1-on-1 conversation between two users
+export async function getOrCreateConversation(userId: string, otherUserId: string): Promise<string> {
+  // Find existing conversation between these two users
+  const { data: existingParticipants } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .in('user_id', [userId, otherUserId]);
+
+  if (existingParticipants && existingParticipants.length > 0) {
+    // Group by conversation_id and find one with both users
+    const conversationCounts = existingParticipants.reduce((acc: any, p) => {
+      acc[p.conversation_id] = (acc[p.conversation_id] || 0) + 1;
+      return acc;
+    }, {});
+
+    const existingConvId = Object.keys(conversationCounts).find(
+      id => conversationCounts[id] === 2
+    );
+
+    if (existingConvId) return existingConvId;
+  }
+
+  // Create new conversation
+  const { data: conversation, error: convError } = await supabase
+    .from('conversations')
+    .insert({})
+    .select()
+    .single();
+
+  if (convError) throw convError;
+
+  // Add both users as participants
+  const { error: participantsError } = await supabase
+    .from('conversation_participants')
+    .insert([
+      { conversation_id: conversation.id, user_id: userId },
+      { conversation_id: conversation.id, user_id: otherUserId }
+    ]);
+
+  if (participantsError) throw participantsError;
+
+  return conversation.id;
+}
+
+// Get all conversations for a user with details
+export async function getConversations(userId: string): Promise<ConversationWithDetails[]> {
+  // Get all conversation IDs for this user
+  const { data: participantData, error: participantError } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('user_id', userId);
+
+  if (participantError) throw participantError;
+  if (!participantData || participantData.length === 0) return [];
+
+  const conversationIds = participantData.map(p => p.conversation_id);
+
+  // Get conversation details
+  const { data: conversations, error: convError } = await supabase
+    .from('conversations')
+    .select('*')
+    .in('id', conversationIds)
+    .order('updated_at', { ascending: false });
+
+  if (convError) throw convError;
+
+  // For each conversation, get participants and last message
+  const conversationsWithDetails = await Promise.all(
+    (conversations || []).map(async (conv) => {
+      // Get participants with user info
+      const { data: participants } = await supabase
+        .from('conversation_participants')
+        .select(`
+          *,
+          user:users (*)
+        `)
+        .eq('conversation_id', conv.id);
+
+      // Get last message
+      const { data: messages } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:users!sender_id (*),
+          shared_post:posts (
+            *,
+            users (*)
+          )
+        `)
+        .eq('conversation_id', conv.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const lastMessage = messages && messages.length > 0 ? messages[0] : undefined;
+
+      // Calculate unread count
+      const userParticipant = participants?.find(p => p.user_id === userId);
+      const lastReadAt = userParticipant?.last_read_at;
+
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', conv.id)
+        .neq('sender_id', userId)
+        .gt('created_at', lastReadAt || '1970-01-01');
+
+      // Find the other user (for 1-on-1)
+      const otherUser = participants?.find(p => p.user_id !== userId)?.user;
+
+      return {
+        ...conv,
+        participants: participants || [],
+        last_message: lastMessage,
+        unread_count: unreadCount || 0,
+        other_user: otherUser
+      };
+    })
+  );
+
+  return conversationsWithDetails;
+}
+
+// Get messages in a conversation
+export async function getConversationMessages(conversationId: string): Promise<MessageWithDetails[]> {
+  const { data: messages, error } = await supabase
+    .from('messages')
+    .select(`
+      *,
+      sender:users!sender_id (*),
+      shared_post:posts (
+        *,
+        users (*)
+      )
+    `)
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return messages || [];
+}
+
+// Send a text message
+export async function sendMessage(
+  conversationId: string,
+  senderId: string,
+  content: string
+) {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content
+    })
+    .select(`
+      *,
+      sender:users!sender_id (*),
+      shared_post:posts (
+        *,
+        users (*)
+      )
+    `)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Share a post in a conversation
+export async function sendPostShare(
+  conversationId: string,
+  senderId: string,
+  postId: string,
+  message?: string
+) {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content: message || null,
+      shared_post_id: postId
+    })
+    .select(`
+      *,
+      sender:users!sender_id (*),
+      shared_post:posts (
+        *,
+        users (*)
+      )
+    `)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Mark conversation as read (update last_read_at)
+export async function markConversationRead(conversationId: string, userId: string) {
+  const { error } = await supabase
+    .from('conversation_participants')
+    .update({ last_read_at: new Date().toISOString() })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}
+
+// Get total unread message count across all conversations
+export async function getUnreadMessageCount(userId: string): Promise<number> {
+  const conversations = await getConversations(userId);
+  return conversations.reduce((sum, conv) => sum + conv.unread_count, 0);
+}
+
+// Delete a conversation (removes all messages and participant records)
+export async function deleteConversation(conversationId: string, userId: string) {
+  // Verify user is a participant
+  const { data: participant } = await supabase
+    .from('conversation_participants')
+    .select('id')
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId)
+    .single();
+
+  if (!participant) {
+    throw new Error('You are not a participant in this conversation');
+  }
+
+  // Delete the entire conversation (cascade will delete participants and messages)
+  const { error } = await supabase
+    .from('conversations')
+    .delete()
+    .eq('id', conversationId);
+
+  if (error) throw error;
 }

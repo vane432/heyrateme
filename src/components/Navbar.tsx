@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import NotificationBell from './NotificationBell';
+import MessageIcon from './MessageIcon';
 import InviteModal from './InviteModal';
 
 export default function Navbar() {
@@ -56,8 +57,11 @@ export default function Navbar() {
                   <Link href="/top" className="hidden sm:block text-gray-700 hover:text-gray-900 font-medium">Top</Link>
                   <Link href="/create" className="text-gray-700 hover:text-gray-900 font-medium">Post</Link>
 
-                  {/* Notification Bell - next to Post button */}
+                  {/* Notification Bell */}
                   <NotificationBell userId={user.id} />
+
+                  {/* Message Icon */}
+                  <MessageIcon userId={user.id} />
 
                   {/* Invite Button */}
                   <button

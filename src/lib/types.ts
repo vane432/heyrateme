@@ -188,3 +188,39 @@ export interface Notification {
     caption: string;
   };
 }
+
+// Messaging types
+export interface Conversation {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationParticipant {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  joined_at: string;
+  last_read_at: string;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string | null;
+  shared_post_id: string | null;
+  created_at: string;
+}
+
+export interface MessageWithDetails extends Message {
+  sender: User;
+  shared_post?: Post & { users: User };
+}
+
+export interface ConversationWithDetails extends Conversation {
+  participants: (ConversationParticipant & { user: User })[];
+  last_message?: MessageWithDetails;
+  unread_count: number;
+  other_user?: User; // For 1-on-1 conversations
+}
