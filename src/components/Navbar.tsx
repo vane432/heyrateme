@@ -53,9 +53,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2 sm:gap-4 text-sm">
               {user ? (
                 <>
-                  <Link href="/feed" className="text-gray-700 hover:text-gray-900 font-medium">Feed</Link>
                   <Link href="/top" className="hidden sm:block text-gray-700 hover:text-gray-900 font-medium">Top</Link>
-                  <Link href="/create" className="text-gray-700 hover:text-gray-900 font-medium">Post</Link>
 
                   {/* Notification Bell */}
                   <NotificationBell userId={user.id} />
