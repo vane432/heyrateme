@@ -134,7 +134,16 @@ export const CATEGORIES = [
   'DIY',
   'Life Tips',
   'Photography',
-  'Art'
+  'Art',
+  'Travel',
+  'Music',
+  'Gaming',
+  'Beauty',
+  'Pets',
+  'Sports',
+  'Tech',
+  'Nature',
+  'Memes'
 ] as const
 
 export type Category = typeof CATEGORIES[number]

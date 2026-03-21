@@ -16,7 +16,23 @@ export async function getFeedPosts(category?: string, userId?: string) {
     `)
     .order('created_at', { ascending: false });
 
-  if (category) {
+  // Handle special "Friends" filter
+  if (category === '__friends__' && userId) {
+    // Get list of users the current user follows
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    const followingIds = follows?.map(f => f.following_id) || [];
+
+    if (followingIds.length > 0) {
+      query = query.in('user_id', followingIds);
+    } else {
+      // User doesn't follow anyone - return empty array
+      return [];
+    }
+  } else if (category && category !== '__friends__') {
     query = query.eq('category', category);
   }
 
