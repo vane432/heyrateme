@@ -109,7 +109,7 @@ export default function FeedView() {
                     <div className="w-16 h-3 bg-gray-100 rounded animate-pulse" />
                   </div>
                 </div>
-                <div className="aspect-square bg-gray-200 animate-pulse" />
+                <div className="h-80 bg-gray-200 animate-pulse" />
               </div>
             ))}
           </div>
