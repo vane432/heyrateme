@@ -156,11 +156,14 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               muted
               playsInline
               loop
+              preload="metadata"
+              autoPlay
               onMouseEnter={(e) => e.currentTarget.play()}
               onMouseLeave={(e) => {
                 e.currentTarget.pause();
                 e.currentTarget.currentTime = 0;
               }}
+              onTouchStart={(e) => e.currentTarget.play()}
             />
           ) : (
             <Image
