@@ -6,6 +6,7 @@ import RatingStars from './RatingStars';
 import PostMenu from './PostMenu';
 import ReportModal from './ReportModal';
 import SharePostModal from './SharePostModal';
+import VideoPlayer from './VideoPlayer';
 import type { PostWithUser, ReportReason } from '@/lib/types';
 import { submitRating, submitReport, savePost, unsavePost, isPostSaved } from '@/lib/queries';
 import { useState, useEffect } from 'react';
@@ -150,20 +151,10 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       <Link href={`/post/${post.id}`}>
         <div className="relative w-full aspect-[4/5] bg-gray-100">
           {post.media_type === 'video' ? (
-            <video
+            <VideoPlayer
               src={post.image_url}
-              className="w-full h-full object-cover"
-              muted
-              playsInline
-              loop
-              preload="metadata"
-              autoPlay
-              onMouseEnter={(e) => e.currentTarget.play()}
-              onMouseLeave={(e) => {
-                e.currentTarget.pause();
-                e.currentTarget.currentTime = 0;
-              }}
-              onTouchStart={(e) => e.currentTarget.play()}
+              className="w-full h-full"
+              duration={post.duration_seconds || undefined}
             />
           ) : (
             <Image
@@ -172,13 +163,6 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               fill
               className="object-cover"
             />
-          )}
-
-          {/* Duration badge for videos */}
-          {post.media_type === 'video' && post.duration_seconds && (
-            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-              {Math.floor(post.duration_seconds / 60)}:{String(post.duration_seconds % 60).padStart(2, '0')}
-            </div>
           )}
         </div>
       </Link>
