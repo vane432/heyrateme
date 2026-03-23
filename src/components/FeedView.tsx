@@ -86,8 +86,11 @@ export default function FeedView() {
             HeyRateMe
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:opacity-90 transition">
+            <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:opacity-90 transition hidden sm:flex">
               + Post
+            </Link>
+            <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center hover:opacity-90 transition sm:hidden">
+              <span className="text-sm font-bold">+</span>
             </Link>
 
             {/* Category Search Dropdown */}

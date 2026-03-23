@@ -86,9 +86,15 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/create')}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:opacity-90 transition"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1.5 rounded-full text-sm font-bold hover:opacity-90 transition hidden sm:flex"
             >
               + Post
+            </button>
+            <button
+              onClick={() => router.push('/create')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center hover:opacity-90 transition sm:hidden"
+            >
+              <span className="text-sm font-bold">+</span>
             </button>
 
             {/* Category Search Dropdown */}
