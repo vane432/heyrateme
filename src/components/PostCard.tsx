@@ -160,14 +160,48 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           )}
         </div>
 
-        {/* Post Menu */}
+        {/* Action buttons row */}
         {userId && (
-          <PostMenu
-            postId={post.id}
-            isOwner={isOwner}
-            onReport={() => setShowReportModal(true)}
-            onCopyLink={handleCopyLink}
-          />
+          <div className="flex items-center gap-1">
+            {/* Share button */}
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="p-2 rounded-full transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Share post"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+
+            {/* Bookmark button */}
+            <button
+              onClick={handleSaveToggle}
+              disabled={savingInProgress}
+              className={`p-2 rounded-full transition-colors cursor-pointer ${
+                isSaved ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title={isSaved ? 'Unsave post' : 'Save post'}
+            >
+              {isSaved ? (
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Post Menu */}
+            <PostMenu
+              postId={post.id}
+              isOwner={isOwner}
+              onReport={() => setShowReportModal(true)}
+              onCopyLink={handleCopyLink}
+            />
+          </div>
         )}
       </div>
 
@@ -193,66 +227,28 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
       {/* Content */}
       <div className="p-4">
-        {/* Rating and Save row */}
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <RatingStars
-              postId={post.id}
-              userId={userId}
-              averageRating={currentRating}
-              userRating={userRating}
-              userRatingCreatedAt={userRatingCreatedAt}
-              hasRated={hasRated}
-              onRate={handleRate}
-              isOwner={isOwner}
-              category={post.category}
-              dimensional_averages={post.dimensional_averages}
-              user_dimensional_ratings={post.user_dimensional_ratings}
-              ratingCount={ratingCount}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {hasRated || isOwner
-                ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
-                : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
-              }
-            </p>
-          </div>
-
-          {/* Action buttons row */}
-          {userId && (
-            <div className="flex items-center gap-1">
-              {/* Share button */}
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="p-2 rounded-full transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
-                title="Share post"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
-
-              {/* Bookmark button */}
-              <button
-                onClick={handleSaveToggle}
-                disabled={savingInProgress}
-                className={`p-2 rounded-full transition-colors cursor-pointer ${
-                  isSaved ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'
-                }`}
-                title={isSaved ? 'Unsave post' : 'Save post'}
-              >
-                {isSaved ? (
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          )}
+        {/* Rating section */}
+        <div className="mb-3">
+          <RatingStars
+            postId={post.id}
+            userId={userId}
+            averageRating={currentRating}
+            userRating={userRating}
+            userRatingCreatedAt={userRatingCreatedAt}
+            hasRated={hasRated}
+            onRate={handleRate}
+            isOwner={isOwner}
+            category={post.category}
+            dimensional_averages={post.dimensional_averages}
+            user_dimensional_ratings={post.user_dimensional_ratings}
+            ratingCount={ratingCount}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {hasRated || isOwner
+              ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+              : userId ? '' : `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
+            }
+          </p>
         </div>
 
         {/* Caption */}

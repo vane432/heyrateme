@@ -124,13 +124,7 @@ export default function RatingDimensionsInput({
   // If not rated and not owner, show rating interface
   if (!hasRated || canEdit) {
     return (
-      <div className="backdrop-blur-sm bg-white/80 border border-white/20 rounded-2xl p-6 shadow-xl">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Rate this outfit</h3>
-          <p className="text-sm text-gray-500">Tap segments to rate each dimension</p>
-        </div>
-
+      <div className="w-full backdrop-blur-sm bg-white/80 border border-white/20 rounded-2xl p-4 shadow-xl">
         {/* Dimension ratings */}
         <div className="space-y-6">
           {dimensions.map((dim) => {
@@ -145,14 +139,14 @@ export default function RatingDimensionsInput({
                   </span>
                 </div>
 
-                {/* Segmented bar slider */}
-                <div className="flex items-center gap-1">
+                {/* Segmented bar slider - full width */}
+                <div className="flex items-center gap-1 w-full">
                   {[1, 2, 3, 4, 5].map((value) => (
                     <button
                       key={value}
                       onClick={() => handleSliderChange(dim.key, value)}
                       disabled={isDisabled || isSubmitting}
-                      className={`flex-1 h-3 rounded-full transition-all duration-200 ${
+                      className={`flex-1 h-4 rounded-full transition-all duration-200 ${
                         value <= currentRating
                           ? 'bg-black shadow-sm'
                           : 'bg-gray-200 hover:bg-gray-300'
