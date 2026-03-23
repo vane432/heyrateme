@@ -62,6 +62,7 @@ export interface Database {
           duration_seconds: number | null
           file_size_bytes: number | null
           occasion: string | null
+          gender: string | null
         }
         Insert: {
           id?: string
@@ -74,6 +75,7 @@ export interface Database {
           duration_seconds?: number | null
           file_size_bytes?: number | null
           occasion?: string | null
+          gender?: string | null
         }
         Update: {
           id?: string
@@ -86,6 +88,7 @@ export interface Database {
           duration_seconds?: number | null
           file_size_bytes?: number | null
           occasion?: string | null
+          gender?: string | null
         }
       }
       ratings: {
@@ -169,25 +172,25 @@ export type PostWithUser = Post & {
 }
 
 export const CATEGORIES = [
-  'Fashion',
-  'Food',
-  'Fitness',
-  'DIY',
-  'Life Tips',
-  'Photography',
-  'Art',
-  'Travel',
-  'Music',
-  'Gaming',
-  'Beauty',
-  'Pets',
-  'Sports',
-  'Tech',
-  'Nature',
-  'Memes'
+  'Date Night',
+  'Formal / Event',
+  'Work / Office',
+  'Streetwear',
+  'Thrifted / Vintage',
+  'Night Out / Party',
+  'Casual / Everyday',
+  'Athleisure / Gym'
 ] as const
 
 export type Category = typeof CATEGORIES[number]
+
+// Gender types for fashion posts
+export const GENDERS = [
+  'Menswear',
+  'Womenswear',
+  'Unisex / Androgynous'
+] as const
+export type Gender = typeof GENDERS[number]
 
 // Report types
 export const REPORT_REASONS = ['inappropriate', 'spam', 'harassment', 'other'] as const;

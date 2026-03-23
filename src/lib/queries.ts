@@ -116,7 +116,7 @@ export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
 }
 
 // Get all posts for home feed with user info and ratings
-export async function getFeedPosts(category?: string, userId?: string) {
+export async function getFeedPosts(category?: string, gender?: string, userId?: string) {
   let query = supabase
     .from('posts')
     .select(`
@@ -147,6 +147,11 @@ export async function getFeedPosts(category?: string, userId?: string) {
     }
   } else if (category && category !== '__friends__') {
     query = query.eq('category', category);
+  }
+
+  // Apply gender filter if specified
+  if (gender) {
+    query = query.eq('gender', gender);
   }
 
   const { data: posts, error } = await query;
@@ -445,7 +450,8 @@ export async function createPost(
   mediaType: 'image' | 'video' = 'image',
   durationSeconds?: number,
   fileSizeBytes?: number,
-  occasion?: string | null
+  occasion?: string | null,
+  gender?: string | null
 ) {
   const { data, error } = await supabase
     .from('posts')
@@ -457,7 +463,8 @@ export async function createPost(
       media_type: mediaType,
       duration_seconds: durationSeconds || null,
       file_size_bytes: fileSizeBytes || null,
-      occasion: occasion || null
+      occasion: occasion || null,
+      gender: gender || null
     })
     .select()
     .single();

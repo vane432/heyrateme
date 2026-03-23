@@ -2,21 +2,21 @@ export default function HowItWorks() {
   const steps = [
     {
       number: '1',
-      title: 'Post Your Content',
-      description: 'Upload photos of your outfits, recipes, DIY projects, tips, or creative work.',
-      icon: '📤',
+      title: 'Upload Your Outfit',
+      description: 'Post photos of your outfits with the fashion category and gender style. Perfect for date nights, work looks, or any occasion.',
+      icon: '📸',
     },
     {
       number: '2',
-      title: 'Get Rated',
-      description: 'Other users rate your post from 1 to 5 stars.',
-      icon: '⭐',
+      title: 'Get Multi-Dimensional Ratings',
+      description: 'Users rate you on 4 key dimensions: Style, Fit, Color Harmony, and Occasion Match for detailed feedback.',
+      icon: '✨',
     },
     {
       number: '3',
-      title: 'Climb The Rankings',
-      description: 'Top rated posts appear in daily leaderboards.',
-      icon: '🏆',
+      title: 'Track Your Style Growth',
+      description: 'See your dimensional averages, discover your fashion strengths, and climb the style leaderboards.',
+      icon: '📈',
     },
   ];
 
@@ -25,10 +25,10 @@ export default function HowItWorks() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            How It Works
+            How Fashion Rating Works
           </h2>
           <p className="text-xl text-gray-600">
-            Three simple steps to start sharing and rating
+            Three simple steps to get detailed feedback on your style
           </p>
         </div>
 

@@ -49,9 +49,9 @@ export default function RatingStars({
   const canEdit = hasRated && userRatingCreatedAt && canEditRating(userRatingCreatedAt);
 
   // Determine if we should use dimensional ratings UI
-  const isFashion = category === 'Fashion';
-  const showDimensionalInput = isFashion && !readonly && userId && (!hasRated || canEdit);
-  const showDimensionalDisplay = isFashion && hasRated && !canEdit && dimensional_averages;
+  // All posts are now fashion posts, so always use dimensional ratings
+  const showDimensionalInput = !readonly && userId && (!hasRated || canEdit);
+  const showDimensionalDisplay = hasRated && !canEdit && dimensional_averages;
 
   // Update countdown timer
   useEffect(() => {

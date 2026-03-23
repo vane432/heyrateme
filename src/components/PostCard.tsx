@@ -150,11 +150,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             {post.users.username}
           </Link>
           <p className="text-xs text-gray-500">{post.category}</p>
-          {/* Occasion tag for Fashion posts */}
-          {post.category === 'Fashion' && post.occasion && (
+          {/* Gender tag for all posts */}
+          {post.gender && (
             <div className="flex items-center gap-1 mt-1">
-              <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                <span>📅</span> {post.occasion}
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                <span>{post.gender === 'Menswear' ? '👔' : post.gender === 'Womenswear' ? '👗' : '👤'}</span> {post.gender}
               </span>
             </div>
           )}

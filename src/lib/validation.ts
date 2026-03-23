@@ -170,20 +170,19 @@ export function validateDimensionalRating(dimensions: {
 }
 
 /**
- * Validate occasion field for Fashion posts
+ * Validate gender field for fashion posts
  */
-export function validateOccasionForFashion(
-  category: string,
-  occasion: string | null
+export function validateGenderForFashion(
+  gender: string | null
 ): ValidationError | null {
-  if (category === 'Fashion' && !occasion) {
-    return { field: 'occasion', message: 'Occasion is required for Fashion posts' };
+  if (!gender) {
+    return { field: 'gender', message: 'Gender is required for all fashion posts' };
   }
 
-  const validOccasions = ['Casual', 'Date', 'Interview', 'Wedding', 'Business', 'Formal', 'Other'];
+  const validGenders = ['Menswear', 'Womenswear', 'Unisex / Androgynous'];
 
-  if (occasion && !validOccasions.includes(occasion)) {
-    return { field: 'occasion', message: 'Invalid occasion selected' };
+  if (!validGenders.includes(gender)) {
+    return { field: 'gender', message: 'Invalid gender selected' };
   }
 
   return null;

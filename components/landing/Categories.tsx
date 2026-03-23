@@ -1,12 +1,13 @@
 export default function Categories() {
-  const categories = [
-    { name: 'Fashion', icon: '👗', color: 'from-pink-400 to-purple-500' },
-    { name: 'Food', icon: '🍔', color: 'from-orange-400 to-red-500' },
-    { name: 'Fitness', icon: '💪', color: 'from-green-400 to-teal-500' },
-    { name: 'DIY', icon: '🔨', color: 'from-yellow-400 to-orange-500' },
-    { name: 'Life Tips', icon: '💡', color: 'from-blue-400 to-cyan-500' },
-    { name: 'Photography', icon: '📷', color: 'from-purple-400 to-pink-500' },
-    { name: 'Art', icon: '🎨', color: 'from-red-400 to-pink-500' },
+  const fashionCategories = [
+    { name: 'Date Night', icon: '💕', color: 'from-pink-400 to-rose-500' },
+    { name: 'Formal / Event', icon: '🎩', color: 'from-purple-400 to-indigo-500' },
+    { name: 'Work / Office', icon: '💼', color: 'from-blue-400 to-cyan-500' },
+    { name: 'Streetwear', icon: '🧢', color: 'from-gray-400 to-slate-500' },
+    { name: 'Thrifted / Vintage', icon: '🕰️', color: 'from-amber-400 to-orange-500' },
+    { name: 'Night Out / Party', icon: '🌙', color: 'from-violet-400 to-purple-500' },
+    { name: 'Casual / Everyday', icon: '👕', color: 'from-green-400 to-teal-500' },
+    { name: 'Athleisure / Gym', icon: '💪', color: 'from-red-400 to-pink-500' },
   ];
 
   return (
@@ -14,39 +15,50 @@ export default function Categories() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Start with Fashion
+            Fashion Categories for Every Style
           </h2>
           <p className="text-xl text-gray-600">
-            Get multi-dimensional ratings on your outfits and explore other categories too
+            Get detailed ratings on your outfits for any occasion - from casual dates to formal events
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
-          {categories.map((category, index) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+          {fashionCategories.map((category, index) => (
             <div
               key={category.name}
-              className={`group cursor-pointer ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}
+              className="group cursor-pointer"
             >
-              <div className={`bg-gradient-to-br ${category.color} rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all hover:scale-110 flex flex-col items-center justify-center aspect-square relative`}>
-                {index === 0 && (
-                  <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
-                    Featured
-                  </div>
-                )}
-                <div className="text-5xl mb-3 group-hover:scale-125 transition-transform">
+              <div className={`bg-gradient-to-br ${category.color} rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all hover:scale-105 flex flex-col items-center justify-center aspect-square relative`}>
+                <div className="text-4xl mb-3 group-hover:scale-125 transition-transform">
                   {category.icon}
                 </div>
-                <p className="text-white font-bold text-center">
+                <p className="text-white font-bold text-center text-sm">
                   {category.name}
                 </p>
-                {index === 0 && (
-                  <p className="text-white/80 text-xs text-center mt-1">
-                    Multi-dimensional ratings
-                  </p>
-                )}
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Multi-dimensional rating highlight */}
+        <div className="mt-16 text-center">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Get Multi-Dimensional Feedback</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Style', icon: '✨', description: 'Overall aesthetic appeal' },
+                { label: 'Fit', icon: '👔', description: 'How well clothes fit your body' },
+                { label: 'Color Harmony', icon: '🎨', description: 'Color coordination & matching' },
+                { label: 'Occasion Match', icon: '📅', description: 'Appropriateness for the event' },
+              ].map(dimension => (
+                <div key={dimension.label} className="text-center">
+                  <div className="text-3xl mb-2">{dimension.icon}</div>
+                  <h4 className="font-bold text-gray-900">{dimension.label}</h4>
+                  <p className="text-xs text-gray-600 mt-1">{dimension.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

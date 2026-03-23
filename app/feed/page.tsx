@@ -12,6 +12,7 @@ export default function HomePage() {
   const [posts, setPosts] = useState<PostWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
@@ -23,7 +24,7 @@ export default function HomePage() {
     if (user) {
       loadPosts();
     }
-  }, [selectedCategory, user]);
+  }, [selectedCategory, selectedGender, user]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -37,7 +38,11 @@ export default function HomePage() {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const data = await getFeedPosts(selectedCategory || undefined, user?.id);
+      const data = await getFeedPosts(
+        selectedCategory || undefined,
+        selectedGender || undefined,
+        user?.id
+      );
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -59,6 +64,8 @@ export default function HomePage() {
       <CategoryFilter
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        selectedGender={selectedGender}
+        onGenderChange={setSelectedGender}
       />
 
       {posts.length === 0 ? (

@@ -15,6 +15,7 @@ export default function FeedView() {
   const [posts, setPosts] = useState<PostWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userId, setUserId] = useState<string | undefined>();
   const router = useRouter();
@@ -37,12 +38,16 @@ export default function FeedView() {
 
   useEffect(() => {
     loadPosts();
-  }, [selectedCategory, userId]);
+  }, [selectedCategory, selectedGender, userId]);
 
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const data = await getFeedPosts(selectedCategory || undefined, userId);
+      const data = await getFeedPosts(
+        selectedCategory || undefined,
+        selectedGender || undefined,
+        userId
+      );
       setPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -96,6 +101,8 @@ export default function FeedView() {
         <CategoryFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
+          selectedGender={selectedGender}
+          onGenderChange={setSelectedGender}
         />
 
         {loading ? (
