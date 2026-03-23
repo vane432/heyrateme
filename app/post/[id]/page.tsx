@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getPostById, deletePost } from '@/lib/queries';
+import { getPostById, deletePost, submitRating } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
 import RatingStars from '@/components/RatingStars';
-import { submitRating } from '@/lib/queries';
-import type { PostWithUser } from '@/lib/types';
+import type { PostWithUser, RatingDimensions } from '@/lib/types';
 
 export default function PostPage() {
   const [post, setPost] = useState<PostWithUser | null>(null);
@@ -16,6 +15,11 @@ export default function PostPage() {
   const [user, setUser] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentRating, setCurrentRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [userRatingCreatedAt, setUserRatingCreatedAt] = useState<string | null>(null);
+  const [hasRated, setHasRated] = useState(false);
   const router = useRouter();
   const params = useParams();
   const postId = params.id as string;
@@ -23,6 +27,17 @@ export default function PostPage() {
   useEffect(() => {
     checkUserAndLoadPost();
   }, [postId]);
+
+  // Sync state when post data changes
+  useEffect(() => {
+    if (post) {
+      setCurrentRating(post.average_rating);
+      setRatingCount(post.rating_count);
+      setUserRating(post.user_rating);
+      setUserRatingCreatedAt(post.user_rating_created_at);
+      setHasRated(!!post.user_rating);
+    }
+  }, [post]);
 
   const checkUserAndLoadPost = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -39,6 +54,11 @@ export default function PostPage() {
     try {
       const data = await getPostById(postId, userId);
       setPost(data);
+      setCurrentRating(data.average_rating);
+      setRatingCount(data.rating_count);
+      setUserRating(data.user_rating);
+      setUserRatingCreatedAt(data.user_rating_created_at);
+      setHasRated(!!data.user_rating);
     } catch (error) {
       console.error('Error loading post:', error);
     } finally {
@@ -46,13 +66,51 @@ export default function PostPage() {
     }
   };
 
-  const handleRate = async (rating: number) => {
+  const handleRate = async (rating: number | RatingDimensions) => {
     if (!user) return;
 
     try {
-      await submitRating(postId, user.id, rating);
-      // Always reload the post to get fresh data including updated timestamps
-      await loadPost(user.id);
+      // Determine if dimensional or single rating
+      const isDimensional = typeof rating === 'object';
+      const result = await submitRating(post!.id, user.id, rating, isDimensional);
+
+      // Calculate overall rating for dimensional ratings
+      const overallRating = isDimensional
+        ? Math.round((rating.style + rating.fit + rating.colorHarmony + rating.occasionMatch) / 4)
+        : rating as number;
+
+      if (result.isUpdate) {
+        // Editing existing rating - for simplicity, trigger a page refresh for dimensional
+        if (isDimensional) {
+          window.location.reload();
+        } else {
+          // Recalculate average for single rating
+          const oldUserRating = userRating || 0;
+          const newAverage = ratingCount > 0
+            ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
+            : overallRating;
+
+          setCurrentRating(newAverage);
+          setUserRating(overallRating);
+          setUserRatingCreatedAt(result.created_at);
+          setHasRated(true);
+        }
+      } else {
+        // New rating
+        if (isDimensional) {
+          window.location.reload();
+        } else {
+          // Recalculate average for single rating
+          const newCount = ratingCount + 1;
+          const newAverage = (currentRating * ratingCount + overallRating) / newCount;
+
+          setCurrentRating(newAverage);
+          setRatingCount(newCount);
+          setUserRating(overallRating);
+          setUserRatingCreatedAt(result.created_at);
+          setHasRated(true);
+        }
+      }
     } catch (error: any) {
       alert(error.message);
     }
@@ -173,15 +231,20 @@ export default function PostPage() {
               <RatingStars
                 postId={post.id}
                 userId={user?.id}
-                averageRating={post.average_rating}
-                userRating={post.user_rating}
-                userRatingCreatedAt={post.user_rating_created_at}
+                averageRating={currentRating}
+                userRating={userRating}
+                userRatingCreatedAt={userRatingCreatedAt}
+                hasRated={hasRated}
                 onRate={handleRate}
                 isOwner={user && post.user_id === user.id}
+                category={post.category}
+                dimensional_averages={post.dimensional_averages}
+                user_dimensional_ratings={post.user_dimensional_ratings}
+                ratingCount={ratingCount}
               />
               <p className="text-sm text-gray-500 mt-2">
-                {(post.user_rating || (user && post.user_id === user.id))
-                  ? `${post.rating_count} ${post.rating_count === 1 ? 'rating' : 'ratings'}`
+                {(hasRated || (user && post.user_id === user.id))
+                  ? `${ratingCount} ${ratingCount === 1 ? 'rating' : 'ratings'}`
                   : ''}
               </p>
 
