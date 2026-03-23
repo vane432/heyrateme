@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { canEditRating, getRatingEditTimeRemaining } from '@/lib/queries';
+import type { RatingDimensions } from '@/lib/types';
+import RatingDimensionsInput from './RatingDimensionsInput';
+import DimensionalRatingDisplay from './DimensionalRatingDisplay';
 
 interface RatingStarsProps {
   postId: string;
@@ -10,9 +13,14 @@ interface RatingStarsProps {
   userRating?: number;
   userRatingCreatedAt?: string;
   hasRated?: boolean;
-  onRate?: (rating: number) => void;
+  onRate?: (rating: number | RatingDimensions) => void;
   readonly?: boolean;
   isOwner?: boolean;
+  // New props for dimensional ratings
+  category?: string;
+  dimensional_averages?: RatingDimensions;
+  user_dimensional_ratings?: RatingDimensions;
+  ratingCount?: number;
 }
 
 export default function RatingStars({
@@ -24,7 +32,11 @@ export default function RatingStars({
   hasRated: hasRatedProp,
   onRate,
   readonly = false,
-  isOwner = false
+  isOwner = false,
+  category,
+  dimensional_averages,
+  user_dimensional_ratings,
+  ratingCount = 0,
 }: RatingStarsProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +47,11 @@ export default function RatingStars({
 
   // Check if user can still edit their rating
   const canEdit = hasRated && userRatingCreatedAt && canEditRating(userRatingCreatedAt);
+
+  // Determine if we should use dimensional ratings UI
+  const isFashion = category === 'Fashion';
+  const showDimensionalInput = isFashion && !readonly && userId && (!hasRated || canEdit);
+  const showDimensionalDisplay = isFashion && hasRated && !canEdit && dimensional_averages;
 
   // Update countdown timer
   useEffect(() => {
@@ -54,6 +71,51 @@ export default function RatingStars({
     return () => clearInterval(interval);
   }, [canEdit, userRatingCreatedAt]);
 
+  // Handle dimensional rating submission
+  const handleDimensionalRate = async (dimensions: RatingDimensions) => {
+    if (!onRate || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onRate(dimensions);
+    } catch (error) {
+      console.error('Failed to submit dimensional rating:', error);
+    }
+    finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Show dimensional input for Fashion posts (before rating or within edit window)
+  if (showDimensionalInput) {
+    return (
+      <RatingDimensionsInput
+        postId={postId}
+        userId={userId}
+        currentDimensions={user_dimensional_ratings}
+        dimensionalAverages={dimensional_averages}
+        createdAt={userRatingCreatedAt}
+        hasRated={hasRated}
+        onRate={handleDimensionalRate}
+        readonly={readonly}
+        isOwner={isOwner}
+      />
+    );
+  }
+
+  // Show dimensional display for Fashion posts (after rating, edit window expired)
+  if (showDimensionalDisplay) {
+    return (
+      <DimensionalRatingDisplay
+        dimensionalAverages={dimensional_averages}
+        userDimensionalRatings={user_dimensional_ratings}
+        ratingCount={ratingCount}
+        overallRating={averageRating}
+        showUserRatings={!!userId}
+      />
+    );
+  }
+
+  // ===== Legacy single-star interface =====
   const handleClick = async (rating: number) => {
     if (readonly || !userId || isSubmitting) return;
     // Allow rating if not rated yet, or if within edit window

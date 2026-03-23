@@ -7,7 +7,7 @@ import PostMenu from './PostMenu';
 import ReportModal from './ReportModal';
 import SharePostModal from './SharePostModal';
 import VideoPlayer from './VideoPlayer';
-import type { PostWithUser, ReportReason } from '@/lib/types';
+import type { PostWithUser, ReportReason, RatingDimensions } from '@/lib/types';
 import { submitRating, submitReport, savePost, unsavePost, isPostSaved } from '@/lib/queries';
 import { useState, useEffect } from 'react';
 
@@ -63,31 +63,47 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     setSavingInProgress(false);
   };
 
-  const handleRate = async (rating: number) => {
+  const handleRate = async (rating: number | RatingDimensions) => {
     if (!userId) return;
 
     try {
-      const result = await submitRating(post.id, userId, rating);
+      // Determine if dimensional or single rating
+      const isDimensional = typeof rating === 'object';
+      const result = await submitRating(post.id, userId, rating, isDimensional);
+
+      // Calculate overall rating for dimensional ratings
+      const overallRating = isDimensional
+        ? Math.round((rating.style + rating.fit + rating.colorHarmony + rating.occasionMatch) / 4)
+        : rating as number;
 
       if (result.isUpdate) {
-        // Editing existing rating - recalculate average
-        const oldUserRating = userRating || 0;
-        const newAverage = ratingCount > 0
-          ? (currentRating * ratingCount - oldUserRating + rating) / ratingCount
-          : rating;
+        // Editing existing rating - for simplicity, trigger a page refresh for dimensional
+        if (isDimensional) {
+          window.location.reload();
+        } else {
+          // Recalculate average for single rating
+          const oldUserRating = userRating || 0;
+          const newAverage = ratingCount > 0
+            ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
+            : overallRating;
 
-        setCurrentRating(newAverage);
-        setUserRating(rating);
+          setCurrentRating(newAverage);
+          setUserRating(overallRating);
+        }
       } else {
-        // New rating
-        const newCount = ratingCount + 1;
-        const newAverage = (currentRating * ratingCount + rating) / newCount;
+        // New rating - for simplicity, trigger a page refresh for dimensional
+        if (isDimensional) {
+          window.location.reload();
+        } else {
+          const newCount = ratingCount + 1;
+          const newAverage = (currentRating * ratingCount + overallRating) / newCount;
 
-        setCurrentRating(newAverage);
-        setRatingCount(newCount);
-        setUserRating(rating);
-        setUserRatingCreatedAt(new Date().toISOString());
-        setHasRated(true);
+          setCurrentRating(newAverage);
+          setRatingCount(newCount);
+          setUserRating(overallRating);
+          setUserRatingCreatedAt(new Date().toISOString());
+          setHasRated(true);
+        }
       }
     } catch (error: any) {
       alert(error.message);
@@ -134,6 +150,14 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             {post.users.username}
           </Link>
           <p className="text-xs text-gray-500">{post.category}</p>
+          {/* Occasion tag for Fashion posts */}
+          {post.category === 'Fashion' && post.occasion && (
+            <div className="flex items-center gap-1 mt-1">
+              <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                <span>📅</span> {post.occasion}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Post Menu */}
@@ -181,6 +205,10 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               hasRated={hasRated}
               onRate={handleRate}
               isOwner={isOwner}
+              category={post.category}
+              dimensional_averages={post.dimensional_averages}
+              user_dimensional_ratings={post.user_dimensional_ratings}
+              ratingCount={ratingCount}
             />
             <p className="text-xs text-gray-500 mt-1">
               {hasRated || isOwner

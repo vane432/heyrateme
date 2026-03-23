@@ -141,3 +141,50 @@ export function validateCaption(caption: string): ValidationError | null {
 
   return null;
 }
+
+/**
+ * Validate dimensional rating values
+ */
+export function validateDimensionalRating(dimensions: {
+  style: number;
+  fit: number;
+  colorHarmony: number;
+  occasionMatch: number;
+}): ValidationError | null {
+  const { style, fit, colorHarmony, occasionMatch } = dimensions;
+
+  if (!style || style < 1 || style > 5) {
+    return { field: 'style', message: 'Style rating must be between 1 and 5' };
+  }
+  if (!fit || fit < 1 || fit > 5) {
+    return { field: 'fit', message: 'Fit rating must be between 1 and 5' };
+  }
+  if (!colorHarmony || colorHarmony < 1 || colorHarmony > 5) {
+    return { field: 'colorHarmony', message: 'Color Harmony rating must be between 1 and 5' };
+  }
+  if (!occasionMatch || occasionMatch < 1 || occasionMatch > 5) {
+    return { field: 'occasionMatch', message: 'Occasion Match rating must be between 1 and 5' };
+  }
+
+  return null;
+}
+
+/**
+ * Validate occasion field for Fashion posts
+ */
+export function validateOccasionForFashion(
+  category: string,
+  occasion: string | null
+): ValidationError | null {
+  if (category === 'Fashion' && !occasion) {
+    return { field: 'occasion', message: 'Occasion is required for Fashion posts' };
+  }
+
+  const validOccasions = ['Casual', 'Date', 'Interview', 'Wedding', 'Business', 'Formal', 'Other'];
+
+  if (occasion && !validOccasions.includes(occasion)) {
+    return { field: 'occasion', message: 'Invalid occasion selected' };
+  }
+
+  return null;
+}

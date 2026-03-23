@@ -408,6 +408,52 @@ export default function ProfilePage() {
             ))}
           </div>
         </div>
+
+        {/* ─── Fashion Rating Breakdown (dimensional averages) ─── */}
+        {profile.dimensionalAverages && (
+          <div className="bg-white mt-2 border-b border-gray-100">
+            <div className="max-w-3xl mx-auto px-4 py-4">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <span>👗</span> Fashion Rating Breakdown
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Style', value: profile.dimensionalAverages.style, icon: '✨' },
+                    { label: 'Fit', value: profile.dimensionalAverages.fit, icon: '👔' },
+                    { label: 'Color', value: profile.dimensionalAverages.colorHarmony, icon: '🎨' },
+                    { label: 'Occasion', value: profile.dimensionalAverages.occasionMatch, icon: '📅' },
+                  ].map(dim => (
+                    <div key={dim.label} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
+                      <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                        <span>{dim.icon}</span>
+                        {dim.label}
+                      </span>
+                      <span className="text-sm font-black text-gray-900">
+                        {dim.value.toFixed(1)}★
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Show user's top strength */}
+                {(() => {
+                  const dims = profile.dimensionalAverages;
+                  const max = Math.max(dims.style, dims.fit, dims.colorHarmony, dims.occasionMatch);
+                  const strength = max === dims.style ? 'Style'
+                    : max === dims.fit ? 'Fit'
+                    : max === dims.colorHarmony ? 'Color Harmony'
+                    : 'Occasion Match';
+
+                  return max >= 4.0 && (
+                    <div className="mt-3 inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                      <span>🏆</span> Known for: {strength}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ─── Category highlights (story-circles) ─── */}

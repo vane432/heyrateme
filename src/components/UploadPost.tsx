@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { uploadImage, uploadVideo, createPost, checkRateLimit, getVideoDuration } from '@/lib/queries';
-import { CATEGORIES } from '@/lib/types';
-import { validateMediaFile, validateCaption, validateVideoDuration } from '@/lib/validation';
+import { CATEGORIES, OCCASIONS, type Occasion } from '@/lib/types';
+import { validateMediaFile, validateCaption, validateVideoDuration, validateOccasionForFashion } from '@/lib/validation';
 import Image from 'next/image';
 
 interface UploadPostProps {
@@ -14,6 +14,7 @@ interface UploadPostProps {
 export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
   const [caption, setCaption] = useState('');
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  const [occasion, setOccasion] = useState<Occasion | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -82,6 +83,10 @@ export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
       const captionError = validateCaption(caption);
       if (captionError) throw new Error(captionError.message);
 
+      // 2.5. Occasion validation for Fashion posts
+      const occasionError = validateOccasionForFashion(category, occasion);
+      if (occasionError) throw new Error(occasionError.message);
+
       // 3. Upload media
       let mediaUrl: string;
       let duration: number | undefined;
@@ -101,11 +106,13 @@ export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
         category,
         mediaType || 'image',
         duration,
-        mediaFile.size
+        mediaFile.size,
+        occasion
       );
 
       // 5. Reset
       setCaption('');
+      setOccasion(null);
       setMediaFile(null);
       setMediaType(null);
       setMediaPreview(null);
@@ -190,6 +197,29 @@ export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
           ))}
         </select>
       </div>
+
+      {/* Occasion (only for Fashion category) */}
+      {category === 'Fashion' && (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Occasion <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={occasion || ''}
+            onChange={(e) => setOccasion(e.target.value as Occasion)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            required
+          >
+            <option value="">Select an occasion</option>
+            {OCCASIONS.map((occ) => (
+              <option key={occ} value={occ}>{occ}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Help others understand the context of your outfit
+          </p>
+        </div>
+      )}
 
       {/* Error */}
       {error && (

@@ -1,6 +1,36 @@
 // @ts-nocheck
 import { supabase } from './supabaseClient';
-import type { PostWithUser, ConversationWithDetails, MessageWithDetails } from './types';
+import type { PostWithUser, ConversationWithDetails, MessageWithDetails, RatingDimensions } from './types';
+
+// ─── Helper Functions ───
+
+// Calculate dimensional averages from ratings array
+function calculateDimensionalAverages(ratings: any[]): RatingDimensions | undefined {
+  const dimensionalRatings = ratings?.filter(r => r.rating_type === 'dimensional') || [];
+  const count = dimensionalRatings.length;
+
+  if (count === 0) return undefined;
+
+  return {
+    style: dimensionalRatings.reduce((sum, r) => sum + (r.style_rating || 0), 0) / count,
+    fit: dimensionalRatings.reduce((sum, r) => sum + (r.fit_rating || 0), 0) / count,
+    colorHarmony: dimensionalRatings.reduce((sum, r) => sum + (r.color_harmony_rating || 0), 0) / count,
+    occasionMatch: dimensionalRatings.reduce((sum, r) => sum + (r.occasion_match_rating || 0), 0) / count,
+  };
+}
+
+// Extract user's dimensional ratings from ratings array
+function getUserDimensionalRatings(ratings: any[], userId: string): RatingDimensions | undefined {
+  const userRating = ratings?.find(r => r.user_id === userId);
+  if (!userRating || userRating.rating_type !== 'dimensional') return undefined;
+
+  return {
+    style: userRating.style_rating || 0,
+    fit: userRating.fit_rating || 0,
+    colorHarmony: userRating.color_harmony_rating || 0,
+    occasionMatch: userRating.occasion_match_rating || 0,
+  };
+}
 
 // ─── Saves/Bookmarks ───
 
@@ -64,7 +94,7 @@ export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
 
       const { data: ratings } = await supabase
         .from('ratings')
-        .select('rating')
+        .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type')
         .eq('post_id', post.id);
 
       const ratingCount = ratings?.length || 0;
@@ -77,6 +107,7 @@ export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
+        dimensional_averages: calculateDimensionalAverages(ratings || [])
       } as PostWithUser;
     })
   );
@@ -127,7 +158,7 @@ export async function getFeedPosts(category?: string, userId?: string) {
     (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
-        .select('rating, user_id, created_at')
+        .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type, user_id, created_at')
         .eq('post_id', post.id);
 
       const ratingCount = ratings?.length || 0;
@@ -146,6 +177,8 @@ export async function getFeedPosts(category?: string, userId?: string) {
         rating_count: ratingCount,
         user_rating: userRatingData?.rating,
         user_rating_created_at: userRatingData?.created_at,
+        dimensional_averages: calculateDimensionalAverages(ratings || []),
+        user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined
       } as PostWithUser;
     })
   );
@@ -170,10 +203,10 @@ export async function getPostById(postId: string, userId?: string) {
 
   if (error) throw error;
 
-  // Get ratings
+  // Get ratings with dimensional data
   const { data: ratings } = await supabase
     .from('ratings')
-    .select('rating, user_id, created_at')
+    .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type, user_id, created_at')
     .eq('post_id', postId);
 
   const ratingCount = ratings?.length || 0;
@@ -192,7 +225,9 @@ export async function getPostById(postId: string, userId?: string) {
     average_rating: averageRating,
     rating_count: ratingCount,
     user_rating: userRatingData?.rating,
-    user_rating_created_at: userRatingData?.created_at
+    user_rating_created_at: userRatingData?.created_at,
+    dimensional_averages: calculateDimensionalAverages(ratings || []),
+    user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined
   } as PostWithUser;
 }
 
@@ -226,7 +261,7 @@ export async function getPostsByUsername(username: string) {
     (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
-        .select('rating')
+        .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type')
         .eq('post_id', post.id);
 
       const ratingCount = ratings?.length || 0;
@@ -238,7 +273,8 @@ export async function getPostsByUsername(username: string) {
         ...post,
         users: post.users,
         average_rating: averageRating,
-        rating_count: ratingCount
+        rating_count: ratingCount,
+        dimensional_averages: calculateDimensionalAverages(ratings || [])
       } as PostWithUser;
     })
   );
@@ -263,11 +299,25 @@ export async function getUserProfile(username: string) {
     ? posts.reduce((sum, post) => sum + (post.average_rating * post.rating_count), 0) / totalRatings
     : 0;
 
+  // Calculate dimensional averages across all user's posts
+  const allUserPostIds = posts.map(p => p.id);
+  let userDimensionalAverages: RatingDimensions | undefined;
+
+  if (allUserPostIds.length > 0) {
+    const { data: allRatings } = await supabase
+      .from('ratings')
+      .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type')
+      .in('post_id', allUserPostIds);
+
+    userDimensionalAverages = calculateDimensionalAverages(allRatings || []);
+  }
+
   return {
     user,
     posts,
     postCount: posts.length,
-    averageRating
+    averageRating,
+    dimensionalAverages: userDimensionalAverages
   };
 }
 
@@ -295,7 +345,7 @@ export async function getTopPosts() {
     (posts || []).map(async (post: any) => {
       const { data: ratings } = await supabase
         .from('ratings')
-        .select('rating')
+        .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type')
         .eq('post_id', post.id);
 
       const ratingCount = ratings?.length || 0;
@@ -313,6 +363,7 @@ export async function getTopPosts() {
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
+        dimensional_averages: calculateDimensionalAverages(ratings || []),
         score
       };
     })
@@ -393,7 +444,8 @@ export async function createPost(
   category: string,
   mediaType: 'image' | 'video' = 'image',
   durationSeconds?: number,
-  fileSizeBytes?: number
+  fileSizeBytes?: number,
+  occasion?: string | null
 ) {
   const { data, error } = await supabase
     .from('posts')
@@ -404,7 +456,8 @@ export async function createPost(
       category,
       media_type: mediaType,
       duration_seconds: durationSeconds || null,
-      file_size_bytes: fileSizeBytes || null
+      file_size_bytes: fileSizeBytes || null,
+      occasion: occasion || null
     })
     .select()
     .single();
@@ -483,8 +536,25 @@ export function getRatingEditTimeRemaining(ratingCreatedAt: string): number {
 export async function submitRating(
   postId: string,
   userId: string,
-  rating: number
+  rating: number | RatingDimensions,
+  isDimensional: boolean = false
 ) {
+  // Prepare rating data based on type
+  const ratingData = isDimensional && typeof rating === 'object'
+    ? {
+        // Compute overall as average of dimensions
+        rating: Math.round((rating.style + rating.fit + rating.colorHarmony + rating.occasionMatch) / 4),
+        style_rating: rating.style,
+        fit_rating: rating.fit,
+        color_harmony_rating: rating.colorHarmony,
+        occasion_match_rating: rating.occasionMatch,
+        rating_type: 'dimensional' as const
+      }
+    : {
+        rating: rating as number,
+        rating_type: 'legacy' as const
+      };
+
   // Check if user has already rated
   const { data: existingRating } = await supabase
     .from('ratings')
@@ -499,7 +569,7 @@ export async function submitRating(
       // Update the existing rating
       const { data, error } = await supabase
         .from('ratings')
-        .update({ rating })
+        .update(ratingData)
         .eq('id', existingRating.id)
         .select()
         .single();
@@ -520,7 +590,7 @@ export async function submitRating(
     .insert({
       post_id: postId,
       user_id: userId,
-      rating
+      ...ratingData
     })
     .select()
     .single();
@@ -541,7 +611,7 @@ export async function submitRating(
         type: 'post_rated',
         actor_id: userId,
         post_id: postId,
-        rating_value: rating
+        rating_value: ratingData.rating
       });
     }
   } catch (notifError) {

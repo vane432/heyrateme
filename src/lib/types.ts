@@ -61,6 +61,7 @@ export interface Database {
           media_type: 'image' | 'video'
           duration_seconds: number | null
           file_size_bytes: number | null
+          occasion: string | null
         }
         Insert: {
           id?: string
@@ -72,6 +73,7 @@ export interface Database {
           media_type?: 'image' | 'video'
           duration_seconds?: number | null
           file_size_bytes?: number | null
+          occasion?: string | null
         }
         Update: {
           id?: string
@@ -83,6 +85,7 @@ export interface Database {
           media_type?: 'image' | 'video'
           duration_seconds?: number | null
           file_size_bytes?: number | null
+          occasion?: string | null
         }
       }
       ratings: {
@@ -92,6 +95,11 @@ export interface Database {
           user_id: string
           rating: number
           created_at: string
+          style_rating: number | null
+          fit_rating: number | null
+          color_harmony_rating: number | null
+          occasion_match_rating: number | null
+          rating_type: 'legacy' | 'dimensional'
         }
         Insert: {
           id?: string
@@ -99,6 +107,11 @@ export interface Database {
           user_id: string
           rating: number
           created_at?: string
+          style_rating?: number | null
+          fit_rating?: number | null
+          color_harmony_rating?: number | null
+          occasion_match_rating?: number | null
+          rating_type?: 'legacy' | 'dimensional'
         }
         Update: {
           id?: string
@@ -106,6 +119,11 @@ export interface Database {
           user_id?: string
           rating?: number
           created_at?: string
+          style_rating?: number | null
+          fit_rating?: number | null
+          color_harmony_rating?: number | null
+          occasion_match_rating?: number | null
+          rating_type?: 'legacy' | 'dimensional'
         }
       }
     }
@@ -119,12 +137,35 @@ export type Rating = Database['public']['Tables']['ratings']['Row']
 export const MEDIA_TYPES = ['image', 'video'] as const;
 export type MediaType = typeof MEDIA_TYPES[number];
 
+// Occasion types for Fashion posts
+export const OCCASIONS = [
+  'Casual',
+  'Date',
+  'Interview',
+  'Wedding',
+  'Business',
+  'Formal',
+  'Other'
+] as const;
+export type Occasion = typeof OCCASIONS[number];
+
+// Rating dimensions for multi-dimensional feedback
+export type RatingDimensions = {
+  style: number;
+  fit: number;
+  colorHarmony: number;
+  occasionMatch: number;
+};
+
 export type PostWithUser = Post & {
   users: User
   average_rating: number
   rating_count: number
   user_rating?: number
   user_rating_created_at?: string
+  // Dimensional rating breakdowns (for Fashion category)
+  dimensional_averages?: RatingDimensions
+  user_dimensional_ratings?: RatingDimensions
 }
 
 export const CATEGORIES = [

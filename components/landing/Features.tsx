@@ -1,24 +1,24 @@
 export default function Features() {
   const features = [
     {
+      icon: '👗',
+      title: 'Fashion-First Ratings',
+      description: 'Get detailed feedback across 4 dimensions: Style, Fit, Color Harmony, and Occasion Match.',
+    },
+    {
       icon: '⭐',
-      title: 'Star Ratings',
-      description: 'Posts are rated instead of liked.',
+      title: 'Multi-Dimensional Feedback',
+      description: 'Know exactly what works and what doesn\'t with detailed breakdowns.',
     },
     {
-      icon: '🔥',
-      title: 'Top Posts',
-      description: 'The highest rated posts become featured daily.',
+      icon: '🏆',
+      title: 'Merit-Based Discovery',
+      description: 'Your best work can beat anyone\'s best work, regardless of followers.',
     },
     {
-      icon: '🎨',
-      title: 'Categories',
-      description: 'Discover content across fashion, food, fitness, DIY and more.',
-    },
-    {
-      icon: '👤',
-      title: 'Profiles',
-      description: 'Track your average rating and top performing posts.',
+      icon: '📈',
+      title: 'Track Your Progress',
+      description: 'See your dimensional averages and discover your fashion strengths.',
     },
   ];
 
@@ -27,10 +27,10 @@ export default function Features() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Features That Stand Out
+            Fashion Feedback, Redefined
           </h2>
           <p className="text-xl text-gray-600">
-            Everything you need to share and discover great content
+            Get the detailed fashion feedback you actually need
           </p>
         </div>
 
