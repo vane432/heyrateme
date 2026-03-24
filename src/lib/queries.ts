@@ -618,15 +618,15 @@ export async function submitRating(
     // Only allow editing if we have a valid timestamp and within grace period
     if (existingRating.created_at && canEditRating(existingRating.created_at)) {
       // Update the existing rating
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('ratings')
         .update(ratingData)
-        .eq('id', existingRating.id)
-        .select()
-        .single();
+        .eq('id', existingRating.id);
 
       if (error) throw error;
-      return { ...data, isUpdate: true };
+
+      // Return with original created_at to maintain edit window timing
+      return { ...ratingData, id: existingRating.id, created_at: existingRating.created_at, isUpdate: true };
     } else {
       // Don't mention time limit if there's no timestamp (old rating)
       const message = existingRating.created_at
