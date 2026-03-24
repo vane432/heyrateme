@@ -644,9 +644,10 @@ export async function submitRating(
       ...ratingData
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Failed to save rating');
 
   // Create notification for post owner (if not self-rating, and only for new ratings)
   try {
