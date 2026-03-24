@@ -549,11 +549,20 @@ export async function deletePost(postId: string, userId: string) {
 // Grace period for editing ratings (10 minutes in milliseconds)
 const RATING_EDIT_GRACE_PERIOD_MS = 10 * 60 * 1000;
 
+// Parse timestamp as UTC (handles timestamps without timezone suffix)
+function parseAsUTC(timestamp: string): number {
+  // If timestamp doesn't have timezone info, treat it as UTC
+  const normalized = timestamp.endsWith('Z') || timestamp.includes('+') || timestamp.includes('-', 10)
+    ? timestamp
+    : timestamp + 'Z';
+  return new Date(normalized).getTime();
+}
+
 // Check if a rating can be edited (within grace period)
 export function canEditRating(ratingCreatedAt: string): boolean {
   if (!ratingCreatedAt) return false;
 
-  const createdTime = new Date(ratingCreatedAt).getTime();
+  const createdTime = parseAsUTC(ratingCreatedAt);
   // Safari-safe: check if date parsing failed
   if (isNaN(createdTime)) return false;
 
@@ -565,7 +574,7 @@ export function canEditRating(ratingCreatedAt: string): boolean {
 export function getRatingEditTimeRemaining(ratingCreatedAt: string): number {
   if (!ratingCreatedAt) return 0;
 
-  const createdTime = new Date(ratingCreatedAt).getTime();
+  const createdTime = parseAsUTC(ratingCreatedAt);
   // Safari-safe: check if date parsing failed
   if (isNaN(createdTime)) return 0;
 
