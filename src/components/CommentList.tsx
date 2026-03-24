@@ -9,9 +9,10 @@ import type { CommentWithUser } from '@/lib/types';
 interface CommentListProps {
   postId: string;
   userId?: string;
+  hasRated?: boolean;
 }
 
-export default function CommentList({ postId, userId }: CommentListProps) {
+export default function CommentList({ postId, userId, hasRated }: CommentListProps) {
   const [comments, setComments] = useState<CommentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,6 +69,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
         <CommentInput
           onSubmit={handleSubmitComment}
           disabled={!userId}
+          hasRated={hasRated}
         />
       )}
 

@@ -250,7 +250,7 @@ export default function PostPage() {
               </p>
 
               {/* Comments */}
-              <CommentList postId={post.id} userId={user?.id} />
+              <CommentList postId={post.id} userId={user?.id} hasRated={hasRated} />
             </div>
           </div>
         </div>

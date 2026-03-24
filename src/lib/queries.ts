@@ -1228,6 +1228,18 @@ export async function createComment(
     throw new Error('Comment cannot exceed 500 characters');
   }
 
+  // Check if user has rated this post (required to comment)
+  const { data: existingRating } = await supabase
+    .from('ratings')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!existingRating) {
+    throw new Error('You must rate this post before commenting');
+  }
+
   const { data, error } = await supabase
     .from('comments')
     .insert({

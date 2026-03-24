@@ -5,9 +5,10 @@ import { useState } from 'react';
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
   disabled?: boolean;
+  hasRated?: boolean;
 }
 
-export default function CommentInput({ onSubmit, disabled }: CommentInputProps) {
+export default function CommentInput({ onSubmit, disabled, hasRated }: CommentInputProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -43,6 +44,18 @@ export default function CommentInput({ onSubmit, disabled }: CommentInputProps) 
       handleSubmit();
     }
   };
+
+  // Show message if user hasn't rated yet
+  if (hasRated === false) {
+    return (
+      <div className="border-t border-gray-100 pt-3">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+          <p className="text-sm text-gray-600 mb-1">⭐ Rate this post to comment</p>
+          <p className="text-xs text-gray-500">You need to rate this post before you can leave a comment</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="border-t border-gray-100 pt-3">
