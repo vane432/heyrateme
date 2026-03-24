@@ -612,7 +612,7 @@ export async function submitRating(
     .select('id, created_at')
     .eq('post_id', postId)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (existingRating) {
     // Only allow editing if we have a valid timestamp and within grace period
