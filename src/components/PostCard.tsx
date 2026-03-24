@@ -262,6 +262,16 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           <span className="text-gray-700">{post.caption}</span>
         </p>
 
+        {/* View comments link */}
+        {post.comment_count !== undefined && post.comment_count > 0 && (
+          <Link
+            href={`/post/${post.id}`}
+            className="text-sm text-gray-500 hover:text-gray-700 mt-2 block"
+          >
+            View all {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
+          </Link>
+        )}
+
         {/* Timestamp */}
         <p className="text-xs text-gray-400 mt-2">
           {new Date(post.created_at).toLocaleDateString()}

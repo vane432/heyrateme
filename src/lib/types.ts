@@ -197,6 +197,7 @@ export type PostWithUser = Post & {
   // Dimensional rating breakdowns (for Fashion category)
   dimensional_averages?: RatingDimensions
   user_dimensional_ratings?: RatingDimensions
+  comment_count?: number
 }
 
 export const CATEGORIES = [

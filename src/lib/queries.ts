@@ -102,12 +102,19 @@ export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
         ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
+      // Get comment count
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+
       return {
         ...post,
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
-        dimensional_averages: calculateDimensionalAverages(ratings || [])
+        dimensional_averages: calculateDimensionalAverages(ratings || []),
+        comment_count: commentCount || 0
       } as PostWithUser;
     })
   );
@@ -175,6 +182,12 @@ export async function getFeedPosts(category?: string, gender?: string, userId?: 
         ? ratings?.find((r: any) => r.user_id === userId)
         : undefined;
 
+      // Get comment count
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+
       return {
         ...post,
         users: post.users,
@@ -183,7 +196,8 @@ export async function getFeedPosts(category?: string, gender?: string, userId?: 
         user_rating: userRatingData?.rating,
         user_rating_created_at: userRatingData?.created_at,
         dimensional_averages: calculateDimensionalAverages(ratings || []),
-        user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined
+        user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined,
+        comment_count: commentCount || 0
       } as PostWithUser;
     })
   );
@@ -224,6 +238,12 @@ export async function getPostById(postId: string, userId?: string) {
     ? ratings?.find((r: any) => r.user_id === userId)
     : undefined;
 
+  // Get comment count
+  const { count: commentCount } = await supabase
+    .from('comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('post_id', postId);
+
   return {
     ...(post as any),
     users: post.users,
@@ -232,7 +252,8 @@ export async function getPostById(postId: string, userId?: string) {
     user_rating: userRatingData?.rating,
     user_rating_created_at: userRatingData?.created_at,
     dimensional_averages: calculateDimensionalAverages(ratings || []),
-    user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined
+    user_dimensional_ratings: userId ? getUserDimensionalRatings(ratings || [], userId) : undefined,
+    comment_count: commentCount || 0
   } as PostWithUser;
 }
 
@@ -274,12 +295,19 @@ export async function getPostsByUsername(username: string) {
         ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
         : 0;
 
+      // Get comment count
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+
       return {
         ...post,
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
-        dimensional_averages: calculateDimensionalAverages(ratings || [])
+        dimensional_averages: calculateDimensionalAverages(ratings || []),
+        comment_count: commentCount || 0
       } as PostWithUser;
     })
   );
@@ -363,12 +391,19 @@ export async function getTopPosts() {
         ? averageRating * Math.log(ratingCount + 1)
         : 0;
 
+      // Get comment count
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+
       return {
         ...post,
         users: post.users,
         average_rating: averageRating,
         rating_count: ratingCount,
         dimensional_averages: calculateDimensionalAverages(ratings || []),
+        comment_count: commentCount || 0,
         score
       };
     })
