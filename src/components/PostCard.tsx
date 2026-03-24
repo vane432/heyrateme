@@ -77,33 +77,24 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         : rating as number;
 
       if (result.isUpdate) {
-        // Editing existing rating - for simplicity, trigger a page refresh for dimensional
-        if (isDimensional) {
-          window.location.reload();
-        } else {
-          // Recalculate average for single rating
-          const oldUserRating = userRating || 0;
-          const newAverage = ratingCount > 0
-            ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
-            : overallRating;
+        // Editing existing rating
+        const oldUserRating = userRating || 0;
+        const newAverage = ratingCount > 0
+          ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
+          : overallRating;
 
-          setCurrentRating(newAverage);
-          setUserRating(overallRating);
-        }
+        setCurrentRating(newAverage);
+        setUserRating(overallRating);
       } else {
-        // New rating - for simplicity, trigger a page refresh for dimensional
-        if (isDimensional) {
-          window.location.reload();
-        } else {
-          const newCount = ratingCount + 1;
-          const newAverage = (currentRating * ratingCount + overallRating) / newCount;
+        // New rating
+        const newCount = ratingCount + 1;
+        const newAverage = (currentRating * ratingCount + overallRating) / newCount;
 
-          setCurrentRating(newAverage);
-          setRatingCount(newCount);
-          setUserRating(overallRating);
-          setUserRatingCreatedAt(new Date().toISOString());
-          setHasRated(true);
-        }
+        setCurrentRating(newAverage);
+        setRatingCount(newCount);
+        setUserRating(overallRating);
+        setUserRatingCreatedAt(new Date().toISOString());
+        setHasRated(true);
       }
     } catch (error: any) {
       alert(error.message);

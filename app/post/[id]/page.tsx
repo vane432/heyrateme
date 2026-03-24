@@ -81,36 +81,26 @@ export default function PostPage() {
         : rating as number;
 
       if (result.isUpdate) {
-        // Editing existing rating - for simplicity, trigger a page refresh for dimensional
-        if (isDimensional) {
-          window.location.reload();
-        } else {
-          // Recalculate average for single rating
-          const oldUserRating = userRating || 0;
-          const newAverage = ratingCount > 0
-            ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
-            : overallRating;
+        // Editing existing rating
+        const oldUserRating = userRating || 0;
+        const newAverage = ratingCount > 0
+          ? (currentRating * ratingCount - oldUserRating + overallRating) / ratingCount
+          : overallRating;
 
-          setCurrentRating(newAverage);
-          setUserRating(overallRating);
-          setUserRatingCreatedAt(result.created_at);
-          setHasRated(true);
-        }
+        setCurrentRating(newAverage);
+        setUserRating(overallRating);
+        setUserRatingCreatedAt(result.created_at);
+        setHasRated(true);
       } else {
         // New rating
-        if (isDimensional) {
-          window.location.reload();
-        } else {
-          // Recalculate average for single rating
-          const newCount = ratingCount + 1;
-          const newAverage = (currentRating * ratingCount + overallRating) / newCount;
+        const newCount = ratingCount + 1;
+        const newAverage = (currentRating * ratingCount + overallRating) / newCount;
 
-          setCurrentRating(newAverage);
-          setRatingCount(newCount);
-          setUserRating(overallRating);
-          setUserRatingCreatedAt(result.created_at);
-          setHasRated(true);
-        }
+        setCurrentRating(newAverage);
+        setRatingCount(newCount);
+        setUserRating(overallRating);
+        setUserRatingCreatedAt(result.created_at);
+        setHasRated(true);
       }
     } catch (error: any) {
       alert(error.message);
