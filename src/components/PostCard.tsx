@@ -7,8 +7,10 @@ import PostMenu from './PostMenu';
 import ReportModal from './ReportModal';
 import SharePostModal from './SharePostModal';
 import VideoPlayer from './VideoPlayer';
-import type { PostWithUser, ReportReason, RatingDimensions } from '@/lib/types';
-import { submitRating, submitReport, savePost, unsavePost, isPostSaved } from '@/lib/queries';
+import CommentInput from './CommentInput';
+import CommentItem from './CommentItem';
+import type { PostWithUser, ReportReason, RatingDimensions, CommentWithUser } from '@/lib/types';
+import { submitRating, submitReport, savePost, unsavePost, isPostSaved, getComments, createComment, deleteComment } from '@/lib/queries';
 import { useState, useEffect } from 'react';
 
 interface PostCardProps {
@@ -30,6 +32,9 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [copied, setCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [savingInProgress, setSavingInProgress] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<CommentWithUser[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
 
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
@@ -134,6 +139,34 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const handleReport = async (reason: ReportReason, details?: string) => {
     if (!userId) throw new Error('You must be logged in to report');
     await submitReport(post.id, userId, reason, details);
+  };
+
+  const toggleComments = async () => {
+    if (!showComments && comments.length === 0) {
+      // Load comments when expanding for the first time
+      setLoadingComments(true);
+      try {
+        const data = await getComments(post.id, 3); // Load just 3 recent comments
+        setComments(data);
+      } catch (error) {
+        console.error('Failed to load comments:', error);
+      } finally {
+        setLoadingComments(false);
+      }
+    }
+    setShowComments(!showComments);
+  };
+
+  const handleSubmitComment = async (content: string) => {
+    if (!userId) throw new Error('You must be logged in to comment');
+    const newComment = await createComment(post.id, userId, content);
+    setComments([newComment, ...comments]);
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!userId) throw new Error('You must be logged in to delete comments');
+    await deleteComment(commentId, userId);
+    setComments(comments.filter(c => c.id !== commentId));
   };
 
   const isOwner = userId === post.user_id;
@@ -277,14 +310,67 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           <span className="text-gray-700">{post.caption}</span>
         </p>
 
-        {/* View comments link */}
-        {post.comment_count !== undefined && post.comment_count > 0 && (
-          <Link
-            href={`/post/${post.id}`}
-            className="text-sm text-gray-500 hover:text-gray-700 mt-2 block"
+        {/* Comment button */}
+        <div className="flex justify-center mt-3">
+          <button
+            onClick={toggleComments}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors"
           >
-            View all {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
-          </Link>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>
+              {showComments ? 'Hide comments' : post.comment_count > 0 ? `View ${post.comment_count} ${post.comment_count === 1 ? 'comment' : 'comments'}` : 'Comment'}
+            </span>
+          </button>
+        </div>
+
+        {/* Expandable comments section */}
+        {showComments && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            {/* Comment Input */}
+            {userId && (
+              <CommentInput
+                onSubmit={handleSubmitComment}
+                disabled={!userId}
+                hasRated={hasRated || isOwner}
+              />
+            )}
+
+            {/* Comments */}
+            <div className="mt-4">
+              {loadingComments ? (
+                <div className="text-center py-4 text-gray-500 text-sm">Loading...</div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-400 text-sm">No comments yet</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {comments.map(comment => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        userId={userId}
+                        onDelete={handleDeleteComment}
+                      />
+                    ))}
+                  </div>
+
+                  {/* View all comments link */}
+                  {post.comment_count > 3 && (
+                    <Link
+                      href={`/post/${post.id}`}
+                      className="block text-center text-sm text-gray-500 hover:text-gray-700 mt-3"
+                    >
+                      View all {post.comment_count} comments
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Timestamp */}
