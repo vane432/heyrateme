@@ -228,6 +228,10 @@ export async function getPostById(postId: string, userId?: string) {
     .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type, user_id, created_at')
     .eq('post_id', postId);
 
+  // Debug logging for mobile troubleshooting
+  console.log('[getPostById] postId:', postId, 'userId:', userId);
+  console.log('[getPostById] ratings found:', ratings?.length, 'user_ids:', ratings?.map(r => r.user_id));
+
   const ratingCount = ratings?.length || 0;
   const averageRating = ratingCount > 0
     ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
@@ -237,6 +241,8 @@ export async function getPostById(postId: string, userId?: string) {
   const userRatingData = userId
     ? ratings?.find((r: any) => r.user_id === userId)
     : undefined;
+
+  console.log('[getPostById] userRatingData:', userRatingData ? 'found' : 'not found', userRatingData?.created_at);
 
   // Get comment count
   const { count: commentCount } = await supabase
@@ -549,13 +555,31 @@ export async function deletePost(postId: string, userId: string) {
 // Grace period for editing ratings (10 minutes in milliseconds)
 const RATING_EDIT_GRACE_PERIOD_MS = 10 * 60 * 1000;
 
-// Parse timestamp as UTC (handles timestamps without timezone suffix)
+// Parse timestamp as UTC (Safari-compatible)
 function parseAsUTC(timestamp: string): number {
-  // If timestamp doesn't have timezone info, treat it as UTC
-  const normalized = timestamp.endsWith('Z') || timestamp.includes('+') || timestamp.includes('-', 10)
-    ? timestamp
-    : timestamp + 'Z';
-  return new Date(normalized).getTime();
+  if (!timestamp) return NaN;
+
+  // Normalize timestamp for Safari compatibility:
+  // 1. Replace space with T (some DBs return "2024-01-15 10:30:00")
+  // 2. Truncate microseconds to milliseconds (Safari doesn't like .123456)
+  // 3. Add Z suffix if no timezone info
+  let normalized = timestamp
+    .replace(' ', 'T')  // Space to T separator
+    .replace(/\.(\d{3})\d*/, '.$1');  // Truncate to 3 decimal places
+
+  // Add Z if no timezone info present
+  if (!normalized.endsWith('Z') && !normalized.includes('+') && !/\d{2}:\d{2}$/.test(normalized.slice(-6))) {
+    normalized += 'Z';
+  }
+
+  const time = new Date(normalized).getTime();
+
+  // Debug log for mobile troubleshooting (remove later)
+  if (typeof window !== 'undefined') {
+    console.log('[parseAsUTC] input:', timestamp, 'normalized:', normalized, 'parsed:', time, 'isNaN:', isNaN(time));
+  }
+
+  return time;
 }
 
 // Check if a rating can be edited (within grace period)
