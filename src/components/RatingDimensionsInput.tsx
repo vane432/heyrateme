@@ -45,6 +45,7 @@ export default function RatingDimensionsInput({
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   const canEdit = hasRated && createdAt ? canEditRating(createdAt) : true;
   const isDisabled = readonly || isOwner || (hasRated && !canEdit);
@@ -62,17 +63,18 @@ export default function RatingDimensionsInput({
     }
   }, [hasRated, createdAt, canEdit]);
 
-  // Auto-submit when all dimensions are rated
+  // Auto-submit when all dimensions are rated (only after user interaction)
   useEffect(() => {
     const allRated = ratings.style > 0 && ratings.fit > 0 && ratings.colorHarmony > 0 && ratings.occasionMatch > 0;
 
-    if (allRated && !isSubmitting && !isDisabled) {
+    if (allRated && !isSubmitting && !isDisabled && hasUserInteracted) {
       handleAutoSubmit();
     }
-  }, [ratings, isSubmitting, isDisabled]);
+  }, [ratings, isSubmitting, isDisabled, hasUserInteracted]);
 
   const handleSliderChange = (dimension: keyof RatingDimensions, value: number) => {
     if (isDisabled || isSubmitting) return;
+    setHasUserInteracted(true);
     setRatings(prev => ({ ...prev, [dimension]: value }));
   };
 
