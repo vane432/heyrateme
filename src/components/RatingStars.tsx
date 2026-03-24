@@ -41,17 +41,13 @@ export default function RatingStars({
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editTimeRemaining, setEditTimeRemaining] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
 
   // hasRated can be passed explicitly (PostCard) or derived from userRating (post detail page)
   const hasRated = hasRatedProp !== undefined ? hasRatedProp : !!userRating;
 
   // Check if user can still edit their rating
   const canEdit = hasRated && userRatingCreatedAt && canEditRating(userRatingCreatedAt);
-
-  // Determine if we should use dimensional ratings UI
-  // All posts are now fashion posts, so always use dimensional ratings
-  const showDimensionalInput = !readonly && userId && (!hasRated || canEdit);
-  const showDimensionalDisplay = hasRated && !canEdit && dimensional_averages;
 
   // Update countdown timer
   useEffect(() => {
@@ -71,12 +67,21 @@ export default function RatingStars({
     return () => clearInterval(interval);
   }, [canEdit, userRatingCreatedAt]);
 
+  // Reset editing mode when edit window expires
+  useEffect(() => {
+    if (!canEdit) {
+      setIsEditing(false);
+    }
+  }, [canEdit]);
+
   // Handle dimensional rating submission
   const handleDimensionalRate = async (dimensions: RatingDimensions) => {
     if (!onRate || isSubmitting) return;
     setIsSubmitting(true);
     try {
       await onRate(dimensions);
+      // After successful rating, exit edit mode to show the display
+      setIsEditing(false);
     } catch (error) {
       console.error('Failed to submit dimensional rating:', error);
     }
@@ -85,8 +90,15 @@ export default function RatingStars({
     }
   };
 
-  // Show dimensional input for Fashion posts (before rating or within edit window)
-  if (showDimensionalInput) {
+  // Format remaining time as m:ss
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // Show dimensional input for new ratings (hasn't rated yet)
+  if (!readonly && userId && !hasRated && !isOwner) {
     return (
       <RatingDimensionsInput
         postId={postId}
@@ -102,16 +114,55 @@ export default function RatingStars({
     );
   }
 
-  // Show dimensional display for Fashion posts (after rating, edit window expired)
-  if (showDimensionalDisplay) {
+  // Show dimensional input when user clicks "Edit" (within edit window)
+  if (!readonly && userId && hasRated && canEdit && isEditing) {
     return (
-      <DimensionalRatingDisplay
-        dimensionalAverages={dimensional_averages}
-        userDimensionalRatings={user_dimensional_ratings}
-        ratingCount={ratingCount}
-        overallRating={averageRating}
-        showUserRatings={!!userId}
-      />
+      <div>
+        <RatingDimensionsInput
+          postId={postId}
+          userId={userId}
+          currentDimensions={user_dimensional_ratings}
+          dimensionalAverages={dimensional_averages}
+          createdAt={userRatingCreatedAt}
+          hasRated={hasRated}
+          onRate={handleDimensionalRate}
+          readonly={readonly}
+          isOwner={isOwner}
+        />
+        <button
+          onClick={() => setIsEditing(false)}
+          className="mt-2 text-sm text-gray-500 hover:text-gray-700"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  // Show dimensional display after rating (default view)
+  if (hasRated && dimensional_averages) {
+    return (
+      <div>
+        <DimensionalRatingDisplay
+          dimensionalAverages={dimensional_averages}
+          userDimensionalRatings={user_dimensional_ratings}
+          ratingCount={ratingCount}
+          overallRating={averageRating}
+          showUserRatings={!!userId}
+        />
+        {/* Edit button if within edit window */}
+        {canEdit && editTimeRemaining > 0 && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="mt-3 flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Rating ({formatTime(editTimeRemaining)})
+          </button>
+        )}
+      </div>
     );
   }
 
