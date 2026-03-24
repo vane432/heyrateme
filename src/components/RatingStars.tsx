@@ -139,7 +139,20 @@ export default function RatingStars({
     );
   }
 
-  // Show dimensional display after rating (default view)
+  // Show dimensional display for post owner (they can always see ratings on their posts)
+  if (isOwner && dimensional_averages) {
+    return (
+      <DimensionalRatingDisplay
+        dimensionalAverages={dimensional_averages}
+        userDimensionalRatings={undefined}
+        ratingCount={ratingCount}
+        overallRating={averageRating}
+        showUserRatings={false}
+      />
+    );
+  }
+
+  // Show dimensional display after rating (default view for users who rated)
   if (hasRated && dimensional_averages) {
     return (
       <div>
@@ -162,6 +175,15 @@ export default function RatingStars({
             Edit Rating ({formatTime(editTimeRemaining)})
           </button>
         )}
+      </div>
+    );
+  }
+
+  // Show message for owner if no ratings yet
+  if (isOwner && !dimensional_averages) {
+    return (
+      <div className="text-center py-4 text-sm text-gray-400">
+        No ratings yet
       </div>
     );
   }
