@@ -216,13 +216,6 @@ export default function RatingStars({
           ? averageRating
           : hoverRating;
 
-  // Format remaining time as m:ss
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => {
