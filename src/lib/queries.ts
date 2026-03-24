@@ -228,10 +228,6 @@ export async function getPostById(postId: string, userId?: string) {
     .select('rating, style_rating, fit_rating, color_harmony_rating, occasion_match_rating, rating_type, user_id, created_at')
     .eq('post_id', postId);
 
-  // Debug logging for mobile troubleshooting
-  console.log('[getPostById] postId:', postId, 'userId:', userId);
-  console.log('[getPostById] ratings found:', ratings?.length, 'user_ids:', ratings?.map(r => r.user_id));
-
   const ratingCount = ratings?.length || 0;
   const averageRating = ratingCount > 0
     ? ratings!.reduce((sum, r: any) => sum + r.rating, 0) / ratingCount
@@ -241,8 +237,6 @@ export async function getPostById(postId: string, userId?: string) {
   const userRatingData = userId
     ? ratings?.find((r: any) => r.user_id === userId)
     : undefined;
-
-  console.log('[getPostById] userRatingData:', userRatingData ? 'found' : 'not found', userRatingData?.created_at);
 
   // Get comment count
   const { count: commentCount } = await supabase
@@ -573,11 +567,6 @@ function parseAsUTC(timestamp: string): number {
   }
 
   const time = new Date(normalized).getTime();
-
-  // Debug log for mobile troubleshooting (remove later)
-  if (typeof window !== 'undefined') {
-    console.log('[parseAsUTC] input:', timestamp, 'normalized:', normalized, 'parsed:', time, 'isNaN:', isNaN(time));
-  }
 
   return time;
 }
