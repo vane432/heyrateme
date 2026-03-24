@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { supabase } from './supabaseClient';
-import type { PostWithUser, ConversationWithDetails, MessageWithDetails, RatingDimensions } from './types';
+import type { PostWithUser, ConversationWithDetails, MessageWithDetails, RatingDimensions, CommentWithUser } from './types';
 
 // ─── Helper Functions ───
 
@@ -1154,4 +1154,89 @@ export async function deleteConversation(conversationId: string, userId: string)
     .eq('id', conversationId);
 
   if (error) throw error;
+}
+
+// ─── Comments ───
+
+// Get comments for a post with user info
+export async function getComments(postId: string, limit: number = 20): Promise<CommentWithUser[]> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select(`
+      *,
+      users (
+        id,
+        username,
+        avatar_url
+      )
+    `)
+    .eq('post_id', postId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as CommentWithUser[];
+}
+
+// Create a comment
+export async function createComment(
+  postId: string,
+  userId: string,
+  content: string
+) {
+  // Validate content length
+  const trimmedContent = content.trim();
+  if (trimmedContent.length === 0) {
+    throw new Error('Comment cannot be empty');
+  }
+  if (trimmedContent.length > 500) {
+    throw new Error('Comment cannot exceed 500 characters');
+  }
+
+  const { data, error } = await supabase
+    .from('comments')
+    .insert({
+      post_id: postId,
+      user_id: userId,
+      content: trimmedContent
+    })
+    .select(`
+      *,
+      users (
+        id,
+        username,
+        avatar_url
+      )
+    `)
+    .single();
+
+  if (error) throw error;
+  return data as CommentWithUser;
+}
+
+// Delete a comment (with ownership check)
+export async function deleteComment(commentId: string, userId: string) {
+  // First, verify ownership
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('id, user_id')
+    .eq('id', commentId)
+    .single();
+
+  if (fetchError) throw fetchError;
+  if (!comment) throw new Error('Comment not found');
+
+  // Verify user owns this comment
+  if (comment.user_id !== userId) {
+    throw new Error('You can only delete your own comments');
+  }
+
+  // Delete comment
+  const { error: deleteError } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', commentId)
+    .eq('user_id', userId); // Extra safety check
+
+  if (deleteError) throw deleteError;
 }

@@ -7,6 +7,7 @@ import { getPostById, deletePost, submitRating } from '@/lib/queries';
 import Image from 'next/image';
 import Link from 'next/link';
 import RatingStars from '@/components/RatingStars';
+import CommentList from '@/components/CommentList';
 import type { PostWithUser, RatingDimensions } from '@/lib/types';
 
 export default function PostPage() {
@@ -248,12 +249,8 @@ export default function PostPage() {
                   : ''}
               </p>
 
-              {/* Comments placeholder */}
-              <div className="mt-6 pt-6 border-t">
-                <p className="text-sm text-gray-500 italic">
-                  Comments coming soon...
-                </p>
-              </div>
+              {/* Comments */}
+              <CommentList postId={post.id} userId={user?.id} />
             </div>
           </div>
         </div>

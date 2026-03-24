@@ -129,6 +129,29 @@ export interface Database {
           rating_type?: 'legacy' | 'dimensional'
         }
       }
+      comments: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          content?: string
+          created_at?: string
+        }
+      }
     }
   }
 }
@@ -136,6 +159,11 @@ export interface Database {
 export type User = Database['public']['Tables']['users']['Row']
 export type Post = Database['public']['Tables']['posts']['Row']
 export type Rating = Database['public']['Tables']['ratings']['Row']
+export type Comment = Database['public']['Tables']['comments']['Row']
+
+export type CommentWithUser = Comment & {
+  users: User
+}
 
 export const MEDIA_TYPES = ['image', 'video'] as const;
 export type MediaType = typeof MEDIA_TYPES[number];
