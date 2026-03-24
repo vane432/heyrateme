@@ -264,7 +264,7 @@ export default function PostPage() {
               </p>
 
               {/* Comments */}
-              <CommentList postId={post.id} userId={user?.id} hasRated={hasRated} />
+              <CommentList postId={post.id} userId={user?.id} hasRated={hasRated || (user && post.user_id === user.id)} />
             </div>
           </div>
         </div>
