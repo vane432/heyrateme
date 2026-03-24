@@ -23,6 +23,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [userRating, setUserRating] = useState(post.user_rating);
   const [userRatingCreatedAt, setUserRatingCreatedAt] = useState(post.user_rating_created_at);
   const [hasRated, setHasRated] = useState(!!post.user_rating);
+  const [userDimensionalRatings, setUserDimensionalRatings] = useState(post.user_dimensional_ratings);
+  const [dimensionalAverages, setDimensionalAverages] = useState(post.dimensional_averages);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -36,7 +38,9 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     setUserRating(post.user_rating);
     setUserRatingCreatedAt(post.user_rating_created_at);
     setHasRated(!!post.user_rating);
-  }, [post.average_rating, post.rating_count, post.user_rating, post.user_rating_created_at]);
+    setUserDimensionalRatings(post.user_dimensional_ratings);
+    setDimensionalAverages(post.dimensional_averages);
+  }, [post.average_rating, post.rating_count, post.user_rating, post.user_rating_created_at, post.user_dimensional_ratings, post.dimensional_averages]);
 
   // Check if post is saved on mount
   useEffect(() => {
@@ -95,6 +99,26 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         setUserRating(overallRating);
         setUserRatingCreatedAt(new Date().toISOString());
         setHasRated(true);
+      }
+
+      // Update dimensional ratings if it was a dimensional rating
+      if (isDimensional) {
+        const dimRating = rating as RatingDimensions;
+        setUserDimensionalRatings(dimRating);
+
+        // Update dimensional averages (approximate - add user's rating to the mix)
+        if (dimensionalAverages && ratingCount > 0) {
+          const count = result.isUpdate ? ratingCount : ratingCount + 1;
+          setDimensionalAverages({
+            style: ((dimensionalAverages.style * (count - 1)) + dimRating.style) / count,
+            fit: ((dimensionalAverages.fit * (count - 1)) + dimRating.fit) / count,
+            colorHarmony: ((dimensionalAverages.colorHarmony * (count - 1)) + dimRating.colorHarmony) / count,
+            occasionMatch: ((dimensionalAverages.occasionMatch * (count - 1)) + dimRating.occasionMatch) / count,
+          });
+        } else {
+          // First rating - set averages to user's rating
+          setDimensionalAverages(dimRating);
+        }
       }
     } catch (error: any) {
       alert(error.message);
@@ -230,8 +254,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             onRate={handleRate}
             isOwner={isOwner}
             category={post.category}
-            dimensional_averages={post.dimensional_averages}
-            user_dimensional_ratings={post.user_dimensional_ratings}
+            dimensional_averages={dimensionalAverages}
+            user_dimensional_ratings={userDimensionalRatings}
             ratingCount={ratingCount}
           />
           <p className="text-xs text-gray-500 mt-1">

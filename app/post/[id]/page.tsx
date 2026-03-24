@@ -21,6 +21,8 @@ export default function PostPage() {
   const [userRating, setUserRating] = useState<number | null>(null);
   const [userRatingCreatedAt, setUserRatingCreatedAt] = useState<string | null>(null);
   const [hasRated, setHasRated] = useState(false);
+  const [userDimensionalRatings, setUserDimensionalRatings] = useState<RatingDimensions | undefined>(undefined);
+  const [dimensionalAverages, setDimensionalAverages] = useState<RatingDimensions | undefined>(undefined);
   const router = useRouter();
   const params = useParams();
   const postId = params.id as string;
@@ -37,6 +39,8 @@ export default function PostPage() {
       setUserRating(post.user_rating);
       setUserRatingCreatedAt(post.user_rating_created_at);
       setHasRated(!!post.user_rating);
+      setUserDimensionalRatings(post.user_dimensional_ratings);
+      setDimensionalAverages(post.dimensional_averages);
     }
   }, [post]);
 
@@ -101,6 +105,26 @@ export default function PostPage() {
         setUserRating(overallRating);
         setUserRatingCreatedAt(result.created_at);
         setHasRated(true);
+      }
+
+      // Update dimensional ratings if it was a dimensional rating
+      if (isDimensional) {
+        const dimRating = rating as RatingDimensions;
+        setUserDimensionalRatings(dimRating);
+
+        // Update dimensional averages (approximate - add user's rating to the mix)
+        if (dimensionalAverages && ratingCount > 0) {
+          const count = result.isUpdate ? ratingCount : ratingCount + 1;
+          setDimensionalAverages({
+            style: ((dimensionalAverages.style * (count - 1)) + dimRating.style) / count,
+            fit: ((dimensionalAverages.fit * (count - 1)) + dimRating.fit) / count,
+            colorHarmony: ((dimensionalAverages.colorHarmony * (count - 1)) + dimRating.colorHarmony) / count,
+            occasionMatch: ((dimensionalAverages.occasionMatch * (count - 1)) + dimRating.occasionMatch) / count,
+          });
+        } else {
+          // First rating - set averages to user's rating
+          setDimensionalAverages(dimRating);
+        }
       }
     } catch (error: any) {
       alert(error.message);
@@ -229,8 +253,8 @@ export default function PostPage() {
                 onRate={handleRate}
                 isOwner={user && post.user_id === user.id}
                 category={post.category}
-                dimensional_averages={post.dimensional_averages}
-                user_dimensional_ratings={post.user_dimensional_ratings}
+                dimensional_averages={dimensionalAverages}
+                user_dimensional_ratings={userDimensionalRatings}
                 ratingCount={ratingCount}
               />
               <p className="text-sm text-gray-500 mt-2">
