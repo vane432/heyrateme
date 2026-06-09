@@ -9,8 +9,10 @@ import SharePostModal from './SharePostModal';
 import VideoPlayer from './VideoPlayer';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
+import CritiqueCard, { CritiqueCardProps } from './CritiqueCard';
 import type { PostWithUser, ReportReason, RatingDimensions, CommentWithUser } from '@/lib/types';
-import { submitRating, submitReport, savePost, unsavePost, isPostSaved, getComments, createComment, deleteComment } from '@/lib/queries';
+import { submitRating, submitReport, savePost, unsavePost, isPostSaved, getComments, createComment, deleteComment, saveAICritique } from '@/lib/queries';
+import { supabase } from '@/lib/supabaseClient';
 import { useState, useEffect } from 'react';
 
 interface PostCardProps {
@@ -35,6 +37,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentWithUser[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [summoning, setSummoning] = useState<'vance' | 'kiki' | 'oracle' | null>(null);
+  const [generatedCritique, setGeneratedCritique] = useState<CritiqueCardProps | null>(null);
 
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
@@ -167,6 +171,66 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     if (!userId) throw new Error('You must be logged in to delete comments');
     await deleteComment(commentId, userId);
     setComments(comments.filter(c => c.id !== commentId));
+  };
+
+  const handleSummonAI = async (persona: 'vance' | 'kiki' | 'oracle') => {
+    setSummoning(persona);
+    try {
+      // 1. Fetch the remote image and convert it to Base64 for Gemini
+      const imgRes = await fetch(post.image_url);
+      const blob = await imgRes.blob();
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      const base64 = await base64Promise;
+
+      // 2. Grab the user's secure session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('You must be securely logged in to use AI critics.');
+
+      // 3. Call the Next.js API route with the Auth token
+      const apiRes = await fetch('/api/generate-critique', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ persona, imageBase64: base64, mimeType: blob.type })
+      });
+      const json = await apiRes.json();
+      if (!apiRes.ok || !json.success) throw new Error(json.error || 'AI generation failed');
+
+      // 4. Save the critique using the secure SQL RPC function
+      const aiComment = await saveAICritique(post.id, persona, json.data.rating, json.data.critique_body);
+
+      // 5. Create the comment object and push it to the active feed
+      const newComment: CommentWithUser = {
+        id: aiComment.id,
+        post_id: post.id,
+        user_id: persona === 'vance' ? '11111111-1111-1111-1111-111111111111' : persona === 'kiki' ? '22222222-2222-2222-2222-222222222222' : '33333333-3333-3333-3333-333333333333',
+        content: aiComment.content,
+        created_at: aiComment.created_at,
+        users: { id: 'bot-id', username: aiComment.username, avatar_url: aiComment.avatar_url }
+      };
+
+      setComments(prev => [newComment, ...prev]);
+      setShowComments(true); // Automatically expand the comments drawer
+
+      // 6. Open the highly-shareable modal
+      setGeneratedCritique({
+        persona,
+        imageUrl: post.image_url,
+        rating: json.data.rating,
+        punchline: json.data.viral_punchline,
+        critique: json.data.critique_body
+      });
+    } catch (err: any) {
+      alert(err.message || 'Failed to summon AI');
+    } finally {
+      setSummoning(null);
+    }
   };
 
   const isOwner = userId === post.user_id;
@@ -310,6 +374,36 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           <span className="text-gray-700">{post.caption}</span>
         </p>
 
+        {/* AI Summon Buttons (Only visible to owner) */}
+        {isOwner && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest text-center">Summon AI Critics</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSummonAI('vance')}
+                disabled={!!summoning}
+                className="flex-1 text-[10px] font-mono font-bold bg-slate-900 text-cyan-400 py-2 rounded shadow-sm hover:bg-slate-800 disabled:opacity-50 transition"
+              >
+                {summoning === 'vance' ? 'Summoning...' : 'Roast Me'}
+              </button>
+              <button
+                onClick={() => handleSummonAI('kiki')}
+                disabled={!!summoning}
+                className="flex-1 text-[10px] font-sans font-black bg-gradient-to-r from-fuchsia-500 to-orange-400 text-white py-2 rounded shadow-sm hover:opacity-90 disabled:opacity-50 transition"
+              >
+                {summoning === 'kiki' ? 'Summoning...' : 'Hype Me'}
+              </button>
+              <button
+                onClick={() => handleSummonAI('oracle')}
+                disabled={!!summoning}
+                className="flex-1 text-[10px] font-serif font-bold bg-[#FDFBF7] text-emerald-900 border border-emerald-200 py-2 rounded shadow-sm hover:bg-emerald-50 disabled:opacity-50 transition"
+              >
+                {summoning === 'oracle' ? 'Summoning...' : 'Read Me'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Comment button */}
         <div className="flex justify-center mt-3">
           <button
@@ -395,6 +489,23 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           userId={userId}
           onClose={() => setShowShareModal(false)}
         />
+      )}
+
+      {/* Generated AI Critique Modal */}
+      {generatedCritique && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 pt-10 pb-4 overflow-y-auto backdrop-blur-sm">
+          <div className="relative w-full max-w-sm flex flex-col items-center">
+            <button
+              onClick={() => setGeneratedCritique(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 z-50 p-2 transition-transform hover:scale-110"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <CritiqueCard {...generatedCritique} />
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenAI } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
+import { AI_PERSONAS, AIPersona, AIGeneratedCritique } from '@/lib/ai-personas';
+
+// Initialize the Gemini SDK. 
+// Ensure GEMINI_API_KEY is set in your .env.local file
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+export async function POST(req: NextRequest) {
+  try {
+    // --- SECURITY CHECK: Verify Supabase Auth Token ---
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized access' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Invalid or expired authentication' }, { status: 401 });
+    }
+    // --- END SECURITY CHECK ---
+
+    const body = await req.json();
+    const { persona, imageBase64, mimeType } = body;
+
+    // 1. Validate inputs
+    if (!persona || !AI_PERSONAS[persona as AIPersona]) {
+      return NextResponse.json(
+        { error: `Invalid or missing persona. Expected one of: ${Object.keys(AI_PERSONAS).join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    if (!imageBase64) {
+      return NextResponse.json(
+        { error: 'Missing imageBase64 data in request body.' },
+        { status: 400 }
+      );
+    }
+
+    // Clean up base64 string if it was sent as a Data URI (e.g., "data:image/jpeg;base64,/9j/4AAQ...")
+    let cleanBase64 = imageBase64;
+    let finalMimeType = mimeType || 'image/jpeg';
+    if (imageBase64.startsWith('data:')) {
+      const [prefix, data] = imageBase64.split(',');
+      cleanBase64 = data;
+      finalMimeType = prefix.split(':')[1].split(';')[0];
+    }
+
+    // 2. Define the exact JSON schema based on AIGeneratedCritique
+    const responseSchema = {
+      type: 'OBJECT',
+      properties: {
+        rating: { type: 'NUMBER' },
+        viral_punchline: { type: 'STRING' },
+        critique_body: { type: 'STRING' },
+      },
+      required: ['rating', 'viral_punchline', 'critique_body'],
+    };
+
+    // 3. Call the Gemini API with structured outputs
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash', // Using flash for speed/virality, upgrade to pro if needed
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: "Analyze this outfit and deliver your critique." },
+            {
+              inlineData: {
+                data: cleanBase64,
+                mimeType: finalMimeType,
+              },
+            },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: AI_PERSONAS[persona as AIPersona],
+        responseMimeType: 'application/json',
+        responseSchema: responseSchema,
+        // Optional: you can tweak temperature to increase/decrease the chaos
+        temperature: 0.8,
+      },
+    });
+
+    // 4. Parse the strictly enforced JSON response
+    const critiqueText = response.text();
+    const critiqueData: AIGeneratedCritique = JSON.parse(critiqueText);
+
+    return NextResponse.json({ success: true, data: critiqueData });
+
+  } catch (error: any) {
+    console.error('Error generating AI critique:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
+}

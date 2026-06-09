@@ -110,6 +110,7 @@ export default function CritiqueCard({
           <img
             src={imageUrl}
             alt="Outfit Preview"
+            crossOrigin="anonymous"
             className={`w-full h-full object-cover transition-all duration-700 ${theme.imageFilter}`}
           />
         </div>
