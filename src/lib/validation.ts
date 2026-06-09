@@ -2,8 +2,8 @@
 
 // File size limits
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-export const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
-export const MAX_VIDEO_DURATION = 5 * 60; // 5 minutes in seconds
+export const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15MB
+export const MAX_VIDEO_DURATION = 10; // 10 seconds
 
 // Caption limits
 export const MAX_CAPTION_LENGTH = 500;
@@ -65,10 +65,9 @@ export async function validateVideoDuration(file: File): Promise<ValidationError
       window.URL.revokeObjectURL(video.src);
 
       if (video.duration > MAX_VIDEO_DURATION) {
-        const maxMinutes = Math.floor(MAX_VIDEO_DURATION / 60);
         resolve({
           field: 'video',
-          message: `Video must be under ${maxMinutes} minutes`
+          message: `Videos must be under 10 seconds long to be rated!`
         });
       } else {
         resolve(null);
