@@ -50,11 +50,14 @@ export async function POST(req: NextRequest) {
     const responseSchema = {
       type: 'OBJECT',
       properties: {
-        rating: { type: 'NUMBER' },
+        style: { type: 'NUMBER' },
+        fit: { type: 'NUMBER' },
+        color_harmony: { type: 'NUMBER' },
+        occasion_match: { type: 'NUMBER' },
         viral_punchline: { type: 'STRING' },
         critique_body: { type: 'STRING' },
       },
-      required: ['rating', 'viral_punchline', 'critique_body'],
+      required: ['style', 'fit', 'color_harmony', 'occasion_match', 'viral_punchline', 'critique_body'],
     };
 
     const response = await ai.models.generateContent({
