@@ -21,6 +21,8 @@ export default function CritiqueCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const isVideo = imageUrl.match(/\.(mp4|webm|mov|quicktime)$/i) || imageUrl.startsWith('data:video/');
+
   // Define distinct Spotify-Wrapped-style themes for each persona
   const themes = {
     vance: {
@@ -107,12 +109,23 @@ export default function CritiqueCard({
 
         {/* Outfit Preview */}
         <div className={`relative w-full aspect-[4/5] overflow-hidden z-0 flex-shrink-0 ${theme.imageContainer}`}>
-          <img
-            src={imageUrl}
-            alt="Outfit Preview"
-            crossOrigin="anonymous"
-            className={`w-full h-full object-cover transition-all duration-700 ${theme.imageFilter}`}
-          />
+          {isVideo ? (
+            <video
+              src={imageUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className={`w-full h-full object-cover transition-all duration-700 ${theme.imageFilter}`}
+            />
+          ) : (
+            <img
+              src={imageUrl}
+              alt="Outfit Preview"
+              crossOrigin="anonymous"
+              className={`w-full h-full object-cover transition-all duration-700 ${theme.imageFilter}`}
+            />
+          )}
         </div>
 
         {/* Star Rating Badge (Overlapping Image) */}
