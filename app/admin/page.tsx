@@ -6,9 +6,6 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { getAdminStats, getPendingReports } from '@/lib/queries';
 
-// Admin email addresses with dashboard access
-const ADMIN_EMAILS = ['danish.parvi@gmail.com'];
-
 interface AdminStats {
   totalUsers: number;
   totalPosts: number;
@@ -43,8 +40,10 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'reports'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'reports' | 'settings'>('stats');
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [settings, setSettings] = useState<any>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -60,18 +59,24 @@ export default function AdminPage() {
       return;
     }
 
-    // Check if user is admin
-    const adminCheck = ADMIN_EMAILS.includes(user.email || '');
+    // Check if user is admin via database role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (!adminCheck) {
-      router.push('/feed');
+    if (!userData || userData.role !== 'admin') {
+      router.push('/');
       return;
     }
 
     setIsAdmin(true);
-    setAccessToken(session?.access_token || null);
+    const token = session?.access_token || null;
+    setAccessToken(token);
     await loadStats();
     await loadReports();
+    if (token) await loadSystemSettings(token);
   };
 
   const loadStats = async () => {
@@ -93,6 +98,38 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error loading reports:', error);
     }
+  };
+
+  const loadSystemSettings = async (token: string) => {
+    try {
+      const res = await fetch('/api/admin/system-config', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) setSettings(json.data);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/admin/system-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(settings)
+      });
+      const json = await res.json();
+      if (json.success) alert('Settings saved successfully!');
+      else throw new Error(json.error);
+    } catch (error: any) {
+      alert('Failed to save settings: ' + error.message);
+    }
+    setSavingSettings(false);
   };
 
   const handleReportAction = async (reportId: string, action: 'dismiss' | 'delete') => {
@@ -141,7 +178,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <button
-          onClick={() => { loadStats(); loadReports(); }}
+          onClick={() => { loadStats(); loadReports(); if (accessToken) loadSystemSettings(accessToken); }}
           className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
         >
           Refresh
@@ -174,6 +211,16 @@ export default function AdminPage() {
               {reports.length}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`pb-3 px-2 font-medium ${
+            activeTab === 'settings'
+              ? 'text-purple-600 border-b-2 border-purple-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          AI Settings
         </button>
       </div>
 
@@ -391,6 +438,51 @@ export default function AdminPage() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {activeTab === 'settings' && settings && (
+        <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl">
+          <h2 className="text-xl font-bold mb-6">System Configuration</h2>
+          
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div>
+                <h3 className="font-bold text-gray-900">Enable AI Critics</h3>
+                <p className="text-sm text-gray-500">Turn the AI rating features on or off globally.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={settings.is_ai_enabled}
+                  onChange={(e) => setSettings({ ...settings, is_ai_enabled: e.target.checked })}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-900 mb-1">Max Video Duration (Seconds)</label>
+              <p className="text-sm text-gray-500 mb-2">Maximum allowed length for user video uploads.</p>
+              <input
+                type="number"
+                value={settings.max_video_duration}
+                onChange={(e) => setSettings({ ...settings, max_video_duration: parseInt(e.target.value) || 10 })}
+                className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              />
+            </div>
+
+            <div className="pt-6 border-t border-gray-100">
+              <button
+                onClick={handleSaveSettings}
+                disabled={savingSettings}
+                className="px-6 py-2.5 bg-black text-white font-bold rounded-lg hover:bg-gray-800 disabled:opacity-50 transition"
+              >
+                {savingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
