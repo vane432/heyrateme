@@ -106,8 +106,10 @@ export async function POST(req: NextRequest) {
         p_comment: critiqueData.critique_body
       });
 
-      if (rpcError) console.error('Database Insertion Error:', rpcError);
-      else dbRecord = rpcData;
+      if (rpcError) {
+        throw new Error('Database Insertion Error: ' + rpcError.message);
+      }
+      dbRecord = rpcData;
     }
 
     return NextResponse.json({ success: true, data: critiqueData, record: dbRecord });

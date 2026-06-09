@@ -247,8 +247,35 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
       // 4. Extract the securely inserted comment record from the backend response
       const aiComment = json.record;
+      if (!aiComment) {
+        throw new Error('Failed to save AI critique to database');
+      }
       
       const overallRating = (json.data.style + json.data.fit + json.data.color_harmony + json.data.occasion_match) / 4;
+
+      // Update local rating state to reflect the AI's 4D ratings immediately
+      const newRatingCount = ratingCount + 1;
+      const newAverage = ratingCount > 0 
+        ? (currentRating * ratingCount + overallRating) / newRatingCount 
+        : overallRating;
+      setCurrentRating(newAverage);
+      setRatingCount(newRatingCount);
+
+      if (dimensionalAverages) {
+        setDimensionalAverages({
+          style: ((dimensionalAverages.style * ratingCount) + json.data.style) / newRatingCount,
+          fit: ((dimensionalAverages.fit * ratingCount) + json.data.fit) / newRatingCount,
+          colorHarmony: ((dimensionalAverages.colorHarmony * ratingCount) + json.data.color_harmony) / newRatingCount,
+          occasionMatch: ((dimensionalAverages.occasionMatch * ratingCount) + json.data.occasion_match) / newRatingCount,
+        });
+      } else {
+        setDimensionalAverages({
+          style: json.data.style,
+          fit: json.data.fit,
+          colorHarmony: json.data.color_harmony,
+          occasionMatch: json.data.occasion_match,
+        });
+      }
 
       // 5. Create the comment object and push it to the active feed
       const newComment: CommentWithUser = {
