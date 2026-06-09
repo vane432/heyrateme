@@ -32,6 +32,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // --- SYSTEM SETTINGS CHECK ---
+    // Connect to Supabase early to fetch our live admin configuration
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: systemSettings } = await supabase
+      .from('system_settings')
+      .select('*')
+      .eq('id', true)
+      .single();
+
+    if (systemSettings && systemSettings.is_ai_enabled === false) {
+      return NextResponse.json(
+        { success: false, error: 'AI critic features are currently disabled by the administrator.' },
+        { status: 403 }
+      );
+    }
+
+    let activeInstruction = AI_PERSONAS[persona as AIPersona];
+    if (systemSettings) {
+      if (persona === 'vance' && systemSettings.vance_prompt) activeInstruction = systemSettings.vance_prompt;
+      if (persona === 'kiki' && systemSettings.kiki_prompt) activeInstruction = systemSettings.kiki_prompt;
+      if (persona === 'oracle' && systemSettings.oracle_prompt) activeInstruction = systemSettings.oracle_prompt;
+    }
+    // --- END SYSTEM SETTINGS CHECK ---
+
     if (imageBase64.length > 21000000) {
       return NextResponse.json(
         { success: false, error: 'Media file payload size is too large for AI review.' },
@@ -77,7 +104,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       config: {
-        systemInstruction: AI_PERSONAS[persona as AIPersona],
+        systemInstruction: activeInstruction,
         responseMimeType: 'application/json',
         responseSchema: responseSchema,
         temperature: 0.8,
@@ -104,10 +131,6 @@ export async function POST(req: NextRequest) {
     let dbRecord = null;
     
     if (postId) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
       const { data: rpcData, error: rpcError } = await supabase.rpc('insert_ai_critique', {
         p_post_id: postId,
         p_persona: persona,

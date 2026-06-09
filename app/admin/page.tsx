@@ -473,6 +473,42 @@ export default function AdminPage() {
               />
             </div>
 
+            <div className="pt-4 border-t border-gray-100 space-y-6">
+              <h3 className="font-bold text-gray-900">AI Persona Brains (Prompts)</h3>
+              <p className="text-sm text-gray-500 -mt-5">Override the default instructions for each AI critic. Leave blank to use the system defaults.</p>
+              
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Vance (Sarcastic Elitist)</label>
+                <textarea
+                  value={settings.vance_prompt || ''}
+                  onChange={(e) => setSettings({ ...settings, vance_prompt: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Override Vance's system prompt here..."
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">Kiki (Chaos Hype-Beast)</label>
+                <textarea
+                  value={settings.kiki_prompt || ''}
+                  onChange={(e) => setSettings({ ...settings, kiki_prompt: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Override Kiki's system prompt here..."
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-gray-800 mb-1">The Oracle (Fashion Psychoanalyst)</label>
+                <textarea
+                  value={settings.oracle_prompt || ''}
+                  onChange={(e) => setSettings({ ...settings, oracle_prompt: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Override The Oracle's system prompt here..."
+                />
+              </div>
+            </div>
+
             <div className="pt-6 border-t border-gray-100">
               <button
                 onClick={handleSaveSettings}
