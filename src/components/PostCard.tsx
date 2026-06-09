@@ -176,15 +176,22 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const handleSummonAI = async (persona: 'vance' | 'kiki' | 'oracle') => {
     setSummoning(persona);
     try {
-      // 1. Fetch the remote image and convert it to Base64 for Gemini
+      // 1. Fetch the remote media and convert it to Base64 for Gemini
       const imgRes = await fetch(post.image_url);
       const blob = await imgRes.blob();
+
+      // Ensure a valid mime type is sent to the backend even if the storage bucket lacks it
+      let fileMimeType = blob.type;
+      if (!fileMimeType || fileMimeType === 'application/octet-stream') {
+        fileMimeType = post.media_type === 'video' ? 'video/mp4' : 'image/jpeg';
+      }
+
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
-      const base64 = await base64Promise;
+      const base64Data = await base64Promise;
 
       // 2. Grab the user's secure session token
       const { data: { session } } = await supabase.auth.getSession();
@@ -197,7 +204,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ persona, imageBase64: base64, mimeType: blob.type })
+        body: JSON.stringify({ 
+          persona: persona, 
+          imageBase64: base64Data, 
+          mimeType: fileMimeType 
+        })
       });
       const json = await apiRes.json();
       if (!apiRes.ok || !json.success) throw new Error(json.error || 'AI generation failed');

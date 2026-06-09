@@ -2,31 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { AI_PERSONAS, AIPersona, AIGeneratedCritique } from '@/lib/ai-personas';
 
-// Initialize the Gemini SDK. 
-// Ensure GEMINI_API_KEY is set in your .env.local file
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export async function POST(req: NextRequest) {
   try {
+    // 1. Crash Prevention: Verify and initialize the API key safely inside the function
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('Server missing GEMINI_API_KEY environment variable.');
+      return NextResponse.json(
+        { success: false, error: 'Server Configuration Error: Missing API Key' },
+        { status: 500 }
+      );
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const body = await req.json();
     const { persona, imageBase64, mimeType } = body;
 
-    // 1. Validate inputs
+    // 2. Validate incoming parameters
     if (!persona || !AI_PERSONAS[persona as AIPersona]) {
       return NextResponse.json(
-        { error: `Invalid or missing persona. Expected one of: ${Object.keys(AI_PERSONAS).join(', ')}` },
+        { success: false, error: 'Invalid or missing persona selection.' },
         { status: 400 }
       );
     }
 
     if (!imageBase64) {
       return NextResponse.json(
-        { error: 'Missing imageBase64 data in request body.' },
+        { success: false, error: 'Missing imageBase64 or videoBase64 media data.' },
         { status: 400 }
       );
     }
 
-    // Clean up base64 string if it was sent as a Data URI (e.g., "data:image/jpeg;base64,/9j/4AAQ...")
     let cleanBase64 = imageBase64;
     let finalMimeType = mimeType || 'image/jpeg';
     if (imageBase64.startsWith('data:')) {
@@ -35,16 +41,7 @@ export async function POST(req: NextRequest) {
       finalMimeType = prefix.split(':')[1].split(';')[0];
     }
 
-    // Validate mime-type for supported images and video
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime'];
-    if (!allowedMimeTypes.includes(finalMimeType.toLowerCase())) {
-      return NextResponse.json(
-        { error: `Unsupported media type: ${finalMimeType}. Please upload a valid image or video.` },
-        { status: 400 }
-      );
-    }
-
-    // 2. Define the exact JSON schema based on AIGeneratedCritique
+    // 3. Define strict native string schema formatting
     const responseSchema = {
       type: 'OBJECT',
       properties: {
@@ -55,9 +52,9 @@ export async function POST(req: NextRequest) {
       required: ['rating', 'viral_punchline', 'critique_body'],
     };
 
-    // 3. Call the Gemini API with structured outputs
+    // 4. Call Gemini 1.5 Flash natively supporting image and video blocks
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Using flash for speed/virality, upgrade to pro if needed
+      model: 'gemini-1.5-flash',
       contents: [
         {
           role: 'user',
@@ -76,12 +73,10 @@ export async function POST(req: NextRequest) {
         systemInstruction: AI_PERSONAS[persona as AIPersona],
         responseMimeType: 'application/json',
         responseSchema: responseSchema,
-        // Optional: you can tweak temperature to increase/decrease the chaos
         temperature: 0.8,
       },
     });
 
-    // 4. Parse the strictly enforced JSON response
     const critiqueText = response.text();
     const critiqueData: AIGeneratedCritique = JSON.parse(critiqueText);
 
@@ -89,6 +84,9 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error generating AI critique:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
