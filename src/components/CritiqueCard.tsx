@@ -26,40 +26,37 @@ export default function CritiqueCard({
   // Define distinct Spotify-Wrapped-style themes for each persona
   const themes = {
     vance: {
-      wrapper:
-        'bg-slate-950 text-cyan-50 font-mono border border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.3)]',
-      header: 'text-cyan-400 uppercase tracking-[0.2em] text-xs',
-      imageContainer: 'border-b-2 border-cyan-500',
-      imageFilter: 'grayscale contrast-125 brightness-90',
-      ratingBadge:
-        'bg-cyan-950 border border-cyan-500 text-cyan-400 shadow-[4px_4px_0px_#06b6d4]',
-      punchline: 'text-white font-bold text-xl uppercase tracking-tight',
-      critique: 'text-cyan-100/80 text-sm leading-relaxed',
-      footer: 'text-cyan-600 border-t border-cyan-900/50',
+      wrapper: 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 font-sans tracking-wide border border-gray-700 shadow-2xl',
+      header: 'text-gray-400 uppercase tracking-widest text-xs font-bold',
+      imageContainer: 'border-b border-gray-800',
+      imageFilter: '', // Removed harsh filters
+      ratingBadge: 'bg-black/80 backdrop-blur-md border border-gray-700 text-white shadow-lg rounded-full',
+      punchline: 'text-white font-bold tracking-wide text-xl leading-tight',
+      critique: 'text-gray-300 text-sm leading-relaxed',
+      footer: 'text-gray-500 border-t border-gray-800/50',
+      hashtag: 'bg-gray-800 text-gray-300'
     },
     kiki: {
-      wrapper:
-        'bg-gradient-to-br from-fuchsia-600 via-pink-500 to-orange-400 text-white font-sans rounded-3xl border-4 border-yellow-300 shadow-[8px_8px_0_#fde047]',
-      header: 'text-yellow-300 font-black italic tracking-wider text-sm drop-shadow-md',
-      imageContainer: 'border-4 border-yellow-300 rounded-2xl rotate-1 mx-2 mt-2',
-      imageFilter: 'saturate-150 contrast-110',
-      ratingBadge:
-        'bg-yellow-300 text-fuchsia-900 font-black rounded-full -rotate-3 border-2 border-fuchsia-900',
-      punchline: 'text-white font-black text-2xl drop-shadow-lg uppercase italic leading-tight',
-      critique: 'text-white text-base font-bold leading-tight drop-shadow-sm',
-      footer: 'text-yellow-200 font-bold',
+      wrapper: 'bg-gradient-to-tr from-rose-100 via-teal-50 to-purple-100 text-gray-900 font-sans tracking-wide rounded-3xl shadow-xl',
+      header: 'text-purple-500 font-bold tracking-widest text-xs uppercase',
+      imageContainer: 'rounded-2xl mx-3 mt-3 overflow-hidden shadow-sm border border-white/50',
+      imageFilter: '', // Removed harsh filters
+      ratingBadge: 'bg-white/90 backdrop-blur-sm text-purple-600 font-black rounded-full shadow-lg border border-purple-100',
+      punchline: 'text-gray-900 font-bold tracking-wide text-xl leading-tight',
+      critique: 'text-gray-700 text-sm leading-relaxed font-semibold',
+      footer: 'text-purple-400',
+      hashtag: 'bg-purple-200 text-purple-700'
     },
     oracle: {
-      wrapper:
-        'bg-[#FDFBF7] text-emerald-950 font-serif border border-emerald-900/20 rounded-t-full shadow-xl',
-      header: 'text-emerald-800 tracking-[0.3em] uppercase text-xs text-center pt-8',
-      imageContainer: 'rounded-t-full border-b border-emerald-900/20 mx-4',
-      imageFilter: 'sepia-[0.3] contrast-90 brightness-110',
-      ratingBadge:
-        'bg-emerald-900 text-[#FDFBF7] font-sans tracking-widest text-lg font-light',
-      punchline: 'text-emerald-950 font-medium text-2xl italic text-center',
-      critique: 'text-emerald-800/80 text-sm leading-loose text-center',
-      footer: 'text-emerald-900/40 border-t border-emerald-900/10',
+      wrapper: 'bg-white text-gray-900 font-sans tracking-wide border-[6px] border-gray-100 shadow-2xl rounded-sm',
+      header: 'text-gray-400 tracking-[0.2em] uppercase text-xs font-bold text-center pt-6',
+      imageContainer: 'border-b border-gray-100 mx-6',
+      imageFilter: '', // Removed harsh filters
+      ratingBadge: 'bg-gray-900 text-white font-sans tracking-wider text-lg font-medium px-6 rounded-none',
+      punchline: 'text-gray-900 font-bold tracking-wide text-xl text-center leading-snug',
+      critique: 'text-gray-600 text-sm leading-relaxed text-center',
+      footer: 'text-gray-400 border-t border-gray-100',
+      hashtag: 'bg-gray-100 text-gray-600'
     },
   };
 
@@ -142,9 +139,15 @@ export default function CritiqueCard({
           <p className={theme.critique}>{critique}</p>
         </div>
 
-        {/* Watermark Footer */}
-        <div className={`p-4 text-center text-[10px] tracking-widest uppercase mt-auto ${theme.footer}`}>
-          heyrate.me • Get Real Feedback
+        {/* Branding Footer */}
+        <div className={`p-4 flex items-center justify-between mt-auto ${theme.footer}`}>
+          <div className="flex items-center gap-2 font-bold tracking-wide text-sm">
+            <img src="/logo.png" alt="heyrate.me logo" className="h-6 w-auto object-contain" crossOrigin="anonymous" />
+            <span>heyrate.me</span>
+          </div>
+          <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wide uppercase ${theme.hashtag}`}>
+            #heyrateme
+          </span>
         </div>
       </div>
 

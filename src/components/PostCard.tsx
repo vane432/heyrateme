@@ -207,23 +207,24 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         body: JSON.stringify({ 
           persona: persona, 
           imageBase64: base64Data, 
-          mimeType: fileMimeType 
+          mimeType: fileMimeType,
+          postId: post.id
         })
       });
       const json = await apiRes.json();
       if (!apiRes.ok || !json.success) throw new Error(json.error || 'AI generation failed');
 
-      // 4. Save the critique using the secure SQL RPC function
-      const aiComment = await saveAICritique(post.id, persona, json.data.rating, json.data.critique_body);
+      // 4. Extract the securely inserted comment record from the backend response
+      const aiComment = json.record;
 
       // 5. Create the comment object and push it to the active feed
       const newComment: CommentWithUser = {
-        id: aiComment.id,
+        id: aiComment?.id || `temp-${Date.now()}`,
         post_id: post.id,
         user_id: persona === 'vance' ? '11111111-1111-1111-1111-111111111111' : persona === 'kiki' ? '22222222-2222-2222-2222-222222222222' : '33333333-3333-3333-3333-333333333333',
-        content: aiComment.content,
-        created_at: aiComment.created_at,
-        users: { id: 'bot-id', username: aiComment.username, avatar_url: aiComment.avatar_url }
+        content: aiComment?.content || json.data.critique_body,
+        created_at: aiComment?.created_at || new Date().toISOString(),
+        users: { id: 'bot-id', username: aiComment?.username || persona, avatar_url: aiComment?.avatar_url || null }
       };
 
       setComments(prev => [newComment, ...prev]);
