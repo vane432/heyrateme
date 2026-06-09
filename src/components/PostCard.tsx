@@ -39,6 +39,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [loadingComments, setLoadingComments] = useState(false);
   const [summoning, setSummoning] = useState<'vance' | 'kiki' | 'oracle' | null>(null);
   const [generatedCritique, setGeneratedCritique] = useState<CritiqueCardProps | null>(null);
+  const [summonedPersonas, setSummonedPersonas] = useState<string[]>([]);
 
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
@@ -230,6 +231,9 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       setComments(prev => [newComment, ...prev]);
       setShowComments(true); // Automatically expand the comments drawer
 
+      // Mark this persona as successfully summoned for this session
+      setSummonedPersonas(prev => [...prev, persona]);
+
       // 6. Open the highly-shareable modal
       setGeneratedCritique({
         persona,
@@ -393,24 +397,24 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             <div className="flex gap-2">
               <button
                 onClick={() => handleSummonAI('vance')}
-                disabled={!!summoning}
+                disabled={!!summoning || summonedPersonas.includes('vance')}
                 className="flex-1 text-[10px] font-mono font-bold bg-slate-900 text-cyan-400 py-2 rounded shadow-sm hover:bg-slate-800 disabled:opacity-50 transition"
               >
-                {summoning === 'vance' ? 'Summoning...' : 'Roast Me'}
+                {summoning === 'vance' ? 'Summoning...' : summonedPersonas.includes('vance') ? '✓ Roasted' : 'Roast Me'}
               </button>
               <button
                 onClick={() => handleSummonAI('kiki')}
-                disabled={!!summoning}
+                disabled={!!summoning || summonedPersonas.includes('kiki')}
                 className="flex-1 text-[10px] font-sans font-black bg-gradient-to-r from-fuchsia-500 to-orange-400 text-white py-2 rounded shadow-sm hover:opacity-90 disabled:opacity-50 transition"
               >
-                {summoning === 'kiki' ? 'Summoning...' : 'Hype Me'}
+                {summoning === 'kiki' ? 'Summoning...' : summonedPersonas.includes('kiki') ? '✓ Hyped' : 'Hype Me'}
               </button>
               <button
                 onClick={() => handleSummonAI('oracle')}
-                disabled={!!summoning}
+                disabled={!!summoning || summonedPersonas.includes('oracle')}
                 className="flex-1 text-[10px] font-serif font-bold bg-[#FDFBF7] text-emerald-900 border border-emerald-200 py-2 rounded shadow-sm hover:bg-emerald-50 disabled:opacity-50 transition"
               >
-                {summoning === 'oracle' ? 'Summoning...' : 'Read Me'}
+                {summoning === 'oracle' ? 'Summoning...' : summonedPersonas.includes('oracle') ? '✓ Read' : 'Read Me'}
               </button>
             </div>
           </div>
