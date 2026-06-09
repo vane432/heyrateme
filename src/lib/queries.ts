@@ -1317,13 +1317,19 @@ export async function deleteComment(commentId: string, userId: string) {
 export async function saveAICritique(
   postId: string,
   persona: string,
-  rating: number,
+  style: number,
+  fit: number,
+  color: number,
+  occasion: number,
   commentBody: string
 ) {
   const { data, error } = await supabase.rpc('insert_ai_critique', {
     p_post_id: postId,
     p_persona: persona,
-    p_rating: rating,
+    p_style: style,
+    p_fit: fit,
+    p_color: color,
+    p_occasion: occasion,
     p_comment: commentBody
   });
   if (error) throw error;

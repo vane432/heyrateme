@@ -52,6 +52,34 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     setDimensionalAverages(post.dimensional_averages);
   }, [post.average_rating, post.rating_count, post.user_rating, post.user_rating_created_at, post.user_dimensional_ratings, post.dimensional_averages]);
 
+  // Fetch summoned personas on mount to lock buttons permanently across page reloads
+  useEffect(() => {
+    if (isOwner) {
+      const fetchSummoned = async () => {
+        const aiIds = [
+          '11111111-1111-1111-1111-111111111111', // vance
+          '22222222-2222-2222-2222-222222222222', // kiki
+          '33333333-3333-3333-3333-333333333333'  // oracle
+        ];
+        const { data } = await supabase
+          .from('comments')
+          .select('user_id')
+          .eq('post_id', post.id)
+          .in('user_id', aiIds);
+
+        if (data) {
+          const personas = data.map(c => {
+            if (c.user_id === aiIds[0]) return 'vance';
+            if (c.user_id === aiIds[1]) return 'kiki';
+            return 'oracle';
+          });
+          setSummonedPersonas(personas);
+        }
+      };
+      fetchSummoned();
+    }
+  }, [isOwner, post.id]);
+
   // Check if post is saved on mount
   useEffect(() => {
     if (userId) {
@@ -217,6 +245,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
       // 4. Extract the securely inserted comment record from the backend response
       const aiComment = json.record;
+      
+      const overallRating = (json.data.style + json.data.fit + json.data.color_harmony + json.data.occasion_match) / 4;
 
       // 5. Create the comment object and push it to the active feed
       const newComment: CommentWithUser = {
@@ -238,7 +268,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       setGeneratedCritique({
         persona,
         imageUrl: post.image_url,
-        rating: json.data.rating,
+        rating: overallRating,
         punchline: json.data.viral_punchline,
         critique: json.data.critique_body
       });

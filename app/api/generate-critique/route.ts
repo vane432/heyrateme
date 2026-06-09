@@ -43,11 +43,14 @@ export async function POST(req: NextRequest) {
     const responseSchema = {
       type: 'OBJECT',
       properties: {
-        rating: { type: 'NUMBER' },
+        style: { type: 'NUMBER' },
+        fit: { type: 'NUMBER' },
+        color_harmony: { type: 'NUMBER' },
+        occasion_match: { type: 'NUMBER' },
         viral_punchline: { type: 'STRING' },
         critique_body: { type: 'STRING' },
       },
-      required: ['rating', 'viral_punchline', 'critique_body'],
+      required: ['style', 'fit', 'color_harmony', 'occasion_match', 'viral_punchline', 'critique_body'],
     };
 
     const response = await ai.models.generateContent({
@@ -96,7 +99,10 @@ export async function POST(req: NextRequest) {
       const { data: rpcData, error: rpcError } = await supabase.rpc('insert_ai_critique', {
         p_post_id: postId,
         p_persona: persona,
-        p_rating: critiqueData.rating,
+        p_style: critiqueData.style,
+        p_fit: critiqueData.fit,
+        p_color: critiqueData.color_harmony,
+        p_occasion: critiqueData.occasion_match,
         p_comment: critiqueData.critique_body
       });
 
