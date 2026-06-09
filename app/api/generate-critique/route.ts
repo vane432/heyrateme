@@ -5,10 +5,10 @@ import { AI_PERSONAS, AIPersona, AIGeneratedCritique } from '@/lib/ai-personas';
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || (!apiKey.startsWith('AIzaSy') && !apiKey.startsWith('AQ.'))) {
-      console.error('Server missing or invalid GEMINI_API_KEY environment variable. Received:', apiKey ? `${apiKey.substring(0, 5)}...` : 'undefined');
+    if (!apiKey) {
+      console.error('Server missing GEMINI_API_KEY environment variable.');
       return NextResponse.json(
-        { success: false, error: 'Server Configuration Error: Invalid or Missing API Key' },
+        { success: false, error: 'Server Configuration Error: Missing API Key' },
         { status: 500 }
       );
     }
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       contents: [
         {
           role: 'user',
