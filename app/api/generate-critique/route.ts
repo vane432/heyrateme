@@ -53,9 +53,15 @@ export async function POST(req: NextRequest) {
 
     let activeInstruction = AI_PERSONAS[persona as AIPersona];
     if (systemSettings) {
-      if (persona === 'vance' && systemSettings.vance_prompt) activeInstruction = systemSettings.vance_prompt;
-      if (persona === 'kiki' && systemSettings.kiki_prompt) activeInstruction = systemSettings.kiki_prompt;
-      if (persona === 'oracle' && systemSettings.oracle_prompt) activeInstruction = systemSettings.oracle_prompt;
+      if (persona === 'vance' && systemSettings.vance_prompt) {
+        activeInstruction += `\n\nADDITIONAL ADMIN INSTRUCTIONS:\n${systemSettings.vance_prompt}`;
+      }
+      if (persona === 'kiki' && systemSettings.kiki_prompt) {
+        activeInstruction += `\n\nADDITIONAL ADMIN INSTRUCTIONS:\n${systemSettings.kiki_prompt}`;
+      }
+      if (persona === 'oracle' && systemSettings.oracle_prompt) {
+        activeInstruction += `\n\nADDITIONAL ADMIN INSTRUCTIONS:\n${systemSettings.oracle_prompt}`;
+      }
     }
     // --- END SYSTEM SETTINGS CHECK ---
 
