@@ -9,6 +9,7 @@ export interface CritiqueCardProps {
   rating: number;
   punchline: string;
   critique: string;
+  onClose?: () => void;
 }
 
 export default function CritiqueCard({
@@ -17,6 +18,7 @@ export default function CritiqueCard({
   rating,
   punchline,
   critique,
+  onClose,
 }: CritiqueCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -26,7 +28,7 @@ export default function CritiqueCard({
   // Define distinct Spotify-Wrapped-style themes for each persona
   const themes = {
     vance: {
-      wrapper: 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 font-sans tracking-wide border border-gray-700 shadow-2xl',
+      wrapper: 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 font-sans tracking-wide border border-gray-700 shadow-2xl rounded-2xl',
       header: 'text-gray-400 uppercase tracking-widest text-xs font-bold',
       imageContainer: 'border-b border-gray-800',
       imageFilter: '', // Removed harsh filters
@@ -37,7 +39,7 @@ export default function CritiqueCard({
       hashtag: 'bg-gray-800 text-gray-300'
     },
     kiki: {
-      wrapper: 'bg-gradient-to-tr from-rose-100 via-teal-50 to-purple-100 text-gray-900 font-sans tracking-wide rounded-3xl shadow-xl',
+      wrapper: 'bg-gradient-to-tr from-rose-100 via-teal-50 to-purple-100 text-gray-900 font-sans tracking-wide border border-purple-200 shadow-2xl rounded-2xl',
       header: 'text-purple-500 font-bold tracking-widest text-xs uppercase',
       imageContainer: 'rounded-2xl mx-3 mt-3 overflow-hidden shadow-sm border border-white/50',
       imageFilter: '', // Removed harsh filters
@@ -48,7 +50,7 @@ export default function CritiqueCard({
       hashtag: 'bg-purple-200 text-purple-700'
     },
     oracle: {
-      wrapper: 'bg-white text-gray-900 font-sans tracking-wide border-[6px] border-gray-100 shadow-2xl rounded-sm',
+      wrapper: 'bg-white text-gray-900 font-sans tracking-wide border border-gray-200 shadow-2xl rounded-2xl',
       header: 'text-gray-400 tracking-[0.2em] uppercase text-xs font-bold text-center pt-6',
       imageContainer: 'border-b border-gray-100 mx-6',
       imageFilter: '', // Removed harsh filters
@@ -93,7 +95,17 @@ export default function CritiqueCard({
   };
 
   return (
-    <div className="w-full flex flex-col items-center gap-6 p-4">
+    <div className="w-full relative flex flex-col items-center gap-6 p-4 pt-10">
+      {/* Close Action Mechanism */}
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-0 right-2 text-white/70 hover:text-white transition-all font-bold tracking-widest uppercase text-xs p-2 hover:scale-105 z-50 flex items-center gap-1.5"
+        >
+          ✕ Close
+        </button>
+      )}
+
       {/* Main Shareable Card Container */}
       <div
         ref={cardRef}

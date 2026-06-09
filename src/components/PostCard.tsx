@@ -507,15 +507,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       {generatedCritique && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 pt-10 pb-4 overflow-y-auto backdrop-blur-sm">
           <div className="relative w-full max-w-sm flex flex-col items-center">
-            <button
-              onClick={() => setGeneratedCritique(null)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 z-50 p-2 transition-transform hover:scale-110"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <CritiqueCard {...generatedCritique} />
+            <CritiqueCard {...generatedCritique} onClose={() => setGeneratedCritique(null)} />
           </div>
         </div>
       )}
