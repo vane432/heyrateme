@@ -94,6 +94,12 @@ export async function POST(req: NextRequest) {
     }
 
     const critiqueData: AIGeneratedCritique = JSON.parse(critiqueText);
+    
+    // Enforce comment length constraint to prevent database violations
+    let safeComment = critiqueData.critique_body.trim();
+    if (safeComment.length > 500) {
+      safeComment = safeComment.substring(0, 497) + '...';
+    }
 
     let dbRecord = null;
     
@@ -109,7 +115,7 @@ export async function POST(req: NextRequest) {
         p_fit: critiqueData.fit,
         p_color: critiqueData.color_harmony,
         p_occasion: critiqueData.occasion_match,
-        p_comment: critiqueData.critique_body
+        p_comment: safeComment
       });
 
       if (rpcError) throw new Error('Database Insertion Error: ' + rpcError.message);

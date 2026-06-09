@@ -21,7 +21,7 @@ You must respond with a valid JSON object. The JSON must perfectly match this st
   "color_harmony": float, // 1.0 to 5.0 score for color combination
   "occasion_match": float, // 1.0 to 5.0 score for occasion appropriateness
   "viral_punchline": "A single sentence summary of the critique under 60 characters",
-  "critique_body": "The critique text. MUST be exactly 3 to 5 sentences long."
+  "critique_body": "The critique text. MUST be exactly 3 to 5 sentences long and STRICTLY UNDER 450 CHARACTERS."
 }
 `;
 
