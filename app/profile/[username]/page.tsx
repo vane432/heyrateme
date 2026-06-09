@@ -227,6 +227,8 @@ export default function ProfilePage() {
     gaming: '🎮', books: '📚', pets: '🐾', diy: '🔨', other: '🌟',
   };
 
+  const isAI = ['vance', 'kiki', 'oracle'].includes(profile.user.username.toLowerCase());
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -331,6 +333,11 @@ export default function ProfilePage() {
               <h1 className="text-xl font-black text-gray-900">
                 {profile.user.display_name || `@${profile.user.username}`}
               </h1>
+              {isAI && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm" title="Official AI Critic">
+                  AI 🤖
+                </span>
+              )}
               {profile.averageRating >= 4.5 && (
                 <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
                   ✦ TOP RATED
@@ -754,7 +761,14 @@ export default function ProfilePage() {
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{u.display_name || u.username}</p>
+                      <p className="font-semibold text-gray-900 text-sm flex items-center">
+                        {u.display_name || u.username}
+                        {['vance', 'kiki', 'oracle'].includes(u.username.toLowerCase()) && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm" title="Official AI Critic">
+                            AI 🤖
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-400">@{u.username}</p>
                     </div>
                   </Link>
