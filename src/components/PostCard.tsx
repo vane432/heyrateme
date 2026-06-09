@@ -41,6 +41,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
   const [generatedCritique, setGeneratedCritique] = useState<CritiqueCardProps | null>(null);
   const [summonedPersonas, setSummonedPersonas] = useState<string[]>([]);
 
+  const isOwner = userId === post.user_id;
+
   // Sync when parent reloads the post (e.g. page refresh with user_rating from server)
   useEffect(() => {
     setCurrentRating(post.average_rating);
@@ -278,8 +280,6 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       setSummoning(null);
     }
   };
-
-  const isOwner = userId === post.user_id;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
