@@ -70,7 +70,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           .in('user_id', aiIds);
 
         if (data) {
-          const personas = data.map(c => {
+          const personas = data.map((c: any) => {
             if (c.user_id === aiIds[0]) return 'vance';
             if (c.user_id === aiIds[1]) return 'kiki';
             return 'oracle';
@@ -284,7 +284,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         user_id: persona === 'vance' ? '11111111-1111-1111-1111-111111111111' : persona === 'kiki' ? '22222222-2222-2222-2222-222222222222' : '33333333-3333-3333-3333-333333333333',
         content: aiComment?.content || json.data.critique_body,
         created_at: aiComment?.created_at || new Date().toISOString(),
-        users: { id: 'bot-id', username: aiComment?.username || persona, avatar_url: aiComment?.avatar_url || null }
+        users: { id: 'bot-id', username: aiComment?.username || persona, avatar_url: aiComment?.avatar_url || null } as any
       };
 
       setComments(prev => [newComment, ...prev]);
@@ -487,7 +487,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <span>
-              {showComments ? 'Hide comments' : post.comment_count > 0 ? `View ${post.comment_count} ${post.comment_count === 1 ? 'comment' : 'comments'}` : 'Comment'}
+              {showComments ? 'Hide comments' : (post.comment_count || 0) > 0 ? `View ${post.comment_count} ${post.comment_count === 1 ? 'comment' : 'comments'}` : 'Comment'}
             </span>
           </button>
         </div>
@@ -526,7 +526,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
                   </div>
 
                   {/* View all comments link */}
-                  {post.comment_count > 3 && (
+                  {(post.comment_count || 0) > 3 && (
                     <Link
                       href={`/post/${post.id}`}
                       className="block text-center text-sm text-gray-500 hover:text-gray-700 mt-3"

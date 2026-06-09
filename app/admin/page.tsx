@@ -64,7 +64,7 @@ export default function AdminPage() {
       .from('users')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .single() as { data: { role?: string } | null; error: any };
 
     if (!userData || userData.role !== 'admin') {
       router.push('/');
@@ -102,20 +102,26 @@ export default function AdminPage() {
 
   const loadSystemSettings = async (token: string) => {
     try {
-      const res = await fetch('/api/admin/system-config', {
+      const res = await fetch('/api/system-config', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();
-      if (json.success) setSettings(json.data);
+      if (json.success && json.data) {
+        setSettings(json.data);
+      } else {
+        setSettings({ is_ai_enabled: true, max_video_duration: 10, vance_prompt: '', kiki_prompt: '', oracle_prompt: '' });
+      }
     } catch (error) {
       console.error('Error loading settings:', error);
+      // Fallback defaults so the screen never stays blank
+      setSettings({ is_ai_enabled: true, max_video_duration: 10, vance_prompt: '', kiki_prompt: '', oracle_prompt: '' });
     }
   };
 
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     try {
-      const res = await fetch('/api/admin/system-config', {
+      const res = await fetch('/api/system-config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -441,11 +447,17 @@ export default function AdminPage() {
         </div>
       )}
 
-      {activeTab === 'settings' && settings && (
+      {activeTab === 'settings' && (
         <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl">
           <h2 className="text-xl font-bold mb-6">System Configuration</h2>
           
-          <div className="space-y-6">
+          {!settings ? (
+            <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-4"></div>
+              <p>Loading configuration...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
               <div>
                 <h3 className="font-bold text-gray-900">Enable AI Critics</h3>
@@ -519,6 +531,7 @@ export default function AdminPage() {
               </button>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>
