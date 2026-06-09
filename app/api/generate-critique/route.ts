@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
 import { AI_PERSONAS, AIPersona, AIGeneratedCritique } from '@/lib/ai-personas';
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey });
     const body = await req.json();
-    const { persona, imageBase64, mimeType } = body;
+    const { persona, imageBase64, mimeType, postId } = body;
 
     if (!persona || !AI_PERSONAS[persona as AIPersona]) {
       return NextResponse.json(
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       contents: [
         {
           role: 'user',
@@ -91,7 +92,28 @@ export async function POST(req: NextRequest) {
 
     const critiqueData: AIGeneratedCritique = JSON.parse(critiqueText);
 
-    return NextResponse.json({ success: true, data: critiqueData });
+    let dbRecord = null;
+    
+    if (postId) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('insert_ai_critique', {
+        p_post_id: postId,
+        p_persona: persona,
+        p_style: critiqueData.style,
+        p_fit: critiqueData.fit,
+        p_color: critiqueData.color_harmony,
+        p_occasion: critiqueData.occasion_match,
+        p_comment: critiqueData.critique_body
+      });
+
+      if (rpcError) throw new Error('Database Insertion Error: ' + rpcError.message);
+      dbRecord = rpcData;
+    }
+
+    return NextResponse.json({ success: true, data: critiqueData, record: dbRecord });
 
   } catch (error: any) {
     console.error('Error generating AI critique:', error);
