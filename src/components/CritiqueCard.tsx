@@ -60,7 +60,7 @@ function VanceCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Crit
       {/* Full-bleed image with bottom vignette */}
       <div className="relative w-full flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -142,7 +142,7 @@ function KikiCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Criti
       {/* Floating image with thick border */}
       <div className="relative mx-4 mt-2 rounded-3xl overflow-hidden" style={{ border: '4px solid rgba(255,255,255,0.9)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', aspectRatio: '4/5' }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -219,7 +219,7 @@ function OracleCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Cri
       {/* Full-width image — museum exhibit style */}
       <div className="w-full flex-1 overflow-hidden" style={{ borderTop: '1px solid #e5e5e5', borderBottom: '1px solid #e5e5e5', minHeight: 0 }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -272,12 +272,15 @@ export default function CritiqueCard({
     if (!cardRef.current) return;
     try {
       setIsDownloading(true);
-      const dataUrl = await htmlToImage.toPng(cardRef.current, {
-        quality: 1.0,
-        pixelRatio: 3,
-      });
+      const dataUrl = await htmlToImage.toWebp(cardRef.current, {
+        quality: 0.9,
+        pixelRatio: 2,
+        skipFonts: true,
+        cacheBust: true,
+        allowTaint: true,
+      } as any);
       const link = document.createElement('a');
-      link.download = `heyrate-${persona}-critique.png`;
+      link.download = `heyrate-${persona}-critique.webp`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
