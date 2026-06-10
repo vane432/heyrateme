@@ -147,30 +147,32 @@ export default function RatingDimensionsInput({
 
   if (!hasRated || canEdit) {
     return (
-      <div className="w-full py-2">
+      <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100">
 
-        {/* Prompt */}
-        <p className="text-[11px] text-gray-400 uppercase tracking-widest mb-3 font-medium">
-          Rate this outfit
-        </p>
+        {/* Prompt — coral left border accent */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-0.5 h-3.5 rounded-full bg-[#FF385C]" />
+          <p className="text-[11px] text-gray-500 uppercase tracking-widest font-semibold">
+            Rate this outfit
+          </p>
+        </div>
 
         {/* Star rows — one per dimension */}
         <div className="space-y-2.5">
           {DIMENSIONS.map((dim, i) => {
             const val = ratings[dim.key];
             const isActive = val > 0;
-            // Dim out future dimensions slightly until previous is rated
             const isPending = !isActive && i > ratedCount;
 
             return (
               <div
                 key={dim.key}
                 className={`flex items-center justify-between transition-opacity ${
-                  isPending ? 'opacity-40' : 'opacity-100'
+                  isPending ? 'opacity-35' : 'opacity-100'
                 }`}
               >
                 <span className={`text-xs font-semibold w-16 ${
-                  isActive ? 'text-gray-800' : 'text-gray-400'
+                  isActive ? 'text-gray-800' : 'text-gray-500'
                 }`}>
                   {dim.label}
                 </span>
@@ -179,27 +181,29 @@ export default function RatingDimensionsInput({
                   onChange={v => handleChange(dim.key, v)}
                   disabled={isDisabled || isSubmitting}
                 />
-                <span className="text-xs text-gray-400 w-4 text-right">
-                  {val > 0 ? val : ''}
+                <span className={`text-xs w-4 text-right font-semibold ${
+                  val > 0 ? 'text-[#FF385C]' : 'text-transparent'
+                }`}>
+                  {val > 0 ? val : '0'}
                 </span>
               </div>
             );
           })}
         </div>
 
-        {/* Coral progress dots */}
+        {/* Progress bar */}
         <div className="flex items-center gap-1.5 mt-4">
-          {DIMENSIONS.map((dim, i) => (
+          {DIMENSIONS.map((dim) => (
             <div
               key={dim.key}
-              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
                 ratings[dim.key] > 0 ? 'bg-[#FF385C]' : 'bg-gray-200'
               }`}
             />
           ))}
         </div>
         <p className="text-[10px] text-gray-400 mt-1 text-right">
-          {ratedCount}/4
+          {ratedCount}/4 rated
         </p>
 
         {/* Edit timer */}
