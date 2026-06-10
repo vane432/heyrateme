@@ -310,11 +310,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     : null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-gray-100">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm overflow-hidden mb-4 border border-zinc-100 dark:border-zinc-800">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-        <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+        <div className="w-9 h-9 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
           {post.users.avatar_url ? (
             <Image
               src={post.users.avatar_url}
@@ -324,7 +324,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               className="object-cover w-full h-full"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white text-sm font-bold">
+            <div className="w-full h-full flex items-center justify-center bg-zinc-400 dark:bg-zinc-600 text-white text-sm font-bold">
               {post.users.username[0].toUpperCase()}
             </div>
           )}
@@ -332,17 +332,17 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href={`/${post.users.username}`} className="font-semibold text-sm text-gray-900 hover:underline">
+            <Link href={`/${post.users.username}`} className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 hover:underline">
               {post.users.username}
             </Link>
             {post.gender && (
-              <span className="inline-flex items-center gap-0.5 bg-gray-100 text-gray-500 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                 {post.gender === 'Menswear' ? '👔' : post.gender === 'Womenswear' ? '👗' : '👤'} {post.gender}
               </span>
             )}
           </div>
           {/* Category + timestamp on one line */}
-          <p className="text-[11px] text-gray-400 mt-0.5">
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
             {post.category}
             <span className="mx-1">·</span>
             {new Date(post.created_at).toLocaleDateString()}
@@ -354,7 +354,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <button
               onClick={() => setShowShareModal(true)}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1.5 rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
               title="Share post"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,7 +364,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             <button
               onClick={handleSaveToggle}
               disabled={savingInProgress}
-              className={`p-1.5 rounded-full transition-colors ${isSaved ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`p-1.5 rounded-full transition-colors ${isSaved ? 'text-purple-500' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
               title={isSaved ? 'Unsave post' : 'Save post'}
             >
               {isSaved ? (
@@ -388,7 +388,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       </div>
 
       {/* ── Media ──────────────────────────────────────────────────────────── */}
-      <div className="relative w-full aspect-[4/5] bg-gray-100" onDoubleClick={(e) => e.preventDefault()}>
+      <div className="relative w-full aspect-[4/5] bg-zinc-100 dark:bg-black" onDoubleClick={(e) => e.preventDefault()}>
         {post.media_type === 'video' ? (
           <VideoPlayer
             src={post.image_url}
@@ -429,11 +429,11 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         </div>
 
         {/* Caption */}
-        <p className="text-sm text-gray-900 mb-2">
+        <p className="text-sm text-zinc-900 dark:text-zinc-100 mb-2">
           <Link href={`/${post.users.username}`} className="font-semibold hover:underline">
             {post.users.username}
           </Link>{' '}
-          <span className="text-gray-700">{post.caption}</span>
+          <span className="text-zinc-700 dark:text-zinc-300">{post.caption}</span>
         </p>
 
         {/* ── Summon AI Critics (owner only) — slim pill buttons ─────────── */}
@@ -446,7 +446,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               className={`inline-flex items-center gap-1 px-3 h-7 rounded-full text-[11px] font-bold transition-all disabled:opacity-60
                 ${summonedPersonas.includes('vance')
                   ? 'bg-slate-800 text-cyan-400'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-cyan-400'}`}
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-800 hover:text-cyan-400'}`}
             >
               {summoning === 'vance' ? '...' : summonedPersonas.includes('vance') ? '✓ Roasted' : '🔥 Roast Me'}
             </button>
@@ -458,7 +458,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               className={`inline-flex items-center gap-1 px-3 h-7 rounded-full text-[11px] font-black transition-all disabled:opacity-60
                 ${summonedPersonas.includes('kiki')
                   ? 'bg-gradient-to-r from-fuchsia-500 to-orange-400 text-white'
-                  : 'bg-fuchsia-50 text-fuchsia-600 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-orange-400 hover:text-white'}`}
+                  : 'bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-orange-400 hover:text-white'}`}
             >
               {summoning === 'kiki' ? '...' : summonedPersonas.includes('kiki') ? '✓ Hyped' : '💅 Hype Me'}
             </button>
@@ -469,8 +469,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
               disabled={!!summoning || summonedPersonas.includes('oracle')}
               className={`inline-flex items-center gap-1 px-3 h-7 rounded-full text-[11px] font-semibold border transition-all disabled:opacity-60
                 ${summonedPersonas.includes('oracle')
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                  : 'bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400'
+                  : 'bg-white dark:bg-zinc-900 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'}`}
             >
               {summoning === 'oracle' ? '...' : summonedPersonas.includes('oracle') ? '✓ Read' : '🔮 Read Me'}
             </button>
@@ -480,7 +480,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         {/* ── Comment toggle button ───────────────────────────────────────── */}
         <button
           onClick={toggleComments}
-          className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors mt-1"
+          className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 text-xs transition-colors mt-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -496,7 +496,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
         {/* ── Expandable comments drawer ──────────────────────────────────── */}
         {showComments && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
 
             {/* Comment input — slim, avatar-left style */}
             {userId && (
@@ -510,9 +510,9 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             {/* Comments list */}
             <div className="mt-3">
               {loadingComments ? (
-                <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center py-3">Loading...</p>
               ) : comments.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center py-3">No comments yet. Be the first!</p>
               ) : (
                 <>
                   <div className="space-y-2">
@@ -533,7 +533,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
                   {commentCount > 3 && (
                     <Link
                       href={`/post/${post.id}`}
-                      className="block text-center text-xs text-gray-400 hover:text-gray-600 mt-3"
+                      className="block text-center text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 mt-3"
                     >
                       View all {commentCount} comments →
                     </Link>

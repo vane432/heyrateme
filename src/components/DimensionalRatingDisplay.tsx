@@ -25,15 +25,15 @@ export default function DimensionalRatingDisplay({
   showUserRatings = true,
 }: DimensionalRatingDisplayProps) {
   return (
-    <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100">
+    <div className="w-full bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 border border-zinc-100 dark:border-zinc-800">
 
       {/* Overall score row */}
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="text-3xl font-black text-gray-900 leading-none">
+        <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100 leading-none">
           {overallRating.toFixed(1)}
         </span>
         <span className="text-[#FF385C] text-xl leading-none">★</span>
-        <span className="text-xs text-gray-400 ml-1">
+        <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-1">
           {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
         </span>
       </div>
@@ -48,12 +48,12 @@ export default function DimensionalRatingDisplay({
           return (
             <div key={dim.key} className="flex items-center gap-2">
               {/* Label */}
-              <span className="text-[11px] text-gray-500 w-14 flex-shrink-0">
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400 w-14 flex-shrink-0">
                 {dim.label}
               </span>
 
               {/* Bar track — slightly thicker, more visible gray */}
-              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -64,7 +64,7 @@ export default function DimensionalRatingDisplay({
               </div>
 
               {/* Score */}
-              <span className="text-xs font-bold text-gray-800 w-6 text-right flex-shrink-0">
+              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 w-6 text-right flex-shrink-0">
                 {avg.toFixed(1)}
               </span>
 

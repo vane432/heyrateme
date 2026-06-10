@@ -70,7 +70,7 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
     <div className="flex gap-3 py-3">
       {/* Avatar */}
       <Link href={`/${comment.users.username}`} className="flex-shrink-0">
-        <div className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden">
+        <div className="w-8 h-8 rounded-full bg-zinc-300 dark:bg-zinc-800 overflow-hidden">
           {comment.users.avatar_url ? (
             <Image
               src={comment.users.avatar_url}
@@ -80,7 +80,7 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold text-xs">
+            <div className="w-full h-full flex items-center justify-center bg-zinc-400 dark:bg-zinc-700 text-white font-bold text-xs">
               {comment.users.username[0].toUpperCase()}
             </div>
           )}
@@ -93,11 +93,11 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
           <div className="flex-1">
             <Link
               href={`/${comment.users.username}`}
-              className="font-semibold text-sm text-gray-900 hover:underline"
+              className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 hover:underline"
             >
               {comment.users.username}
             </Link>
-            <span className="text-xs text-gray-400 ml-2">
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-2">
               {formatTime(comment.created_at)}
             </span>
           </div>
@@ -106,7 +106,7 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
           {isOwner && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="text-gray-400 hover:text-red-600 transition-colors"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
               title="Delete comment"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
           )}
         </div>
 
-        <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words">
+        <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-1 whitespace-pre-wrap break-words">
           {comment.content}
         </p>
 
@@ -126,8 +126,8 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
             onClick={handleLikeToggle}
             disabled={!userId || isLiking}
             className={`flex items-center gap-1 text-xs transition-colors ${
-              userHasLiked ? 'text-pink-500 font-semibold' : 'text-gray-400 hover:text-pink-500'
-            } disabled:opacity-50 disabled:hover:text-gray-400`}
+              userHasLiked ? 'text-pink-500 font-semibold' : 'text-zinc-400 dark:text-zinc-500 hover:text-pink-500'
+            } disabled:opacity-50 disabled:hover:text-zinc-400 dark:disabled:hover:text-zinc-500`}
           >
             <svg className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} stroke="currentColor" strokeWidth={2} fill="none" viewBox="0 0 24 24">
               <path
@@ -144,16 +144,16 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Comment?</h3>
-            <p className="text-gray-600 text-sm mb-6">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Delete Comment?</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-6">
               This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50"
               >
                 Cancel
               </button>

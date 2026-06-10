@@ -73,7 +73,7 @@ export default function FeedView() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Top nav */}
       <div className="fixed top-0 left-0 w-full h-12 z-40 border-b bg-white dark:bg-[#09090B] border-zinc-200 dark:border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 h-full flex items-center justify-between">
@@ -104,15 +104,15 @@ export default function FeedView() {
               </button>
 
               {showCategoryDropdown && (
-                <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-48">
-                  <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Style Categories</div>
+                <div className="absolute top-full mt-2 right-0 bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-800 py-2 z-50 min-w-48">
+                  <div className="px-3 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Style Categories</div>
                   <button
                     onClick={() => {
                       setSelectedCategory(null);
                       setShowCategoryDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                      selectedCategory === null ? 'bg-black text-white hover:bg-gray-800' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 ${
+                      selectedCategory === null ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-700 dark:text-zinc-300'
                     }`}
                   >
                     All Styles
@@ -122,8 +122,8 @@ export default function FeedView() {
                       setSelectedCategory('__friends__');
                       setShowCategoryDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                      selectedCategory === '__friends__' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2 ${
+                      selectedCategory === '__friends__' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'text-zinc-700 dark:text-zinc-300'
                     }`}
                   >
                     <span>👥</span> Friends
@@ -135,8 +135,8 @@ export default function FeedView() {
                         setSelectedCategory(category);
                         setShowCategoryDropdown(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                        selectedCategory === category ? 'bg-black text-white hover:bg-gray-800' : 'text-gray-700'
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 ${
+                        selectedCategory === category ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       {category}
@@ -162,15 +162,15 @@ export default function FeedView() {
               </button>
 
               {showGenderDropdown && (
-                <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-48">
-                  <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Gender Style</div>
+                <div className="absolute top-full mt-2 right-0 bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-800 py-2 z-50 min-w-48">
+                  <div className="px-3 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Gender Style</div>
                   <button
                     onClick={() => {
                       setSelectedGender(null);
                       setShowGenderDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                      selectedGender === null ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 ${
+                      selectedGender === null ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-zinc-700 dark:text-zinc-300'
                     }`}
                   >
                     All Genders
@@ -182,8 +182,8 @@ export default function FeedView() {
                         setSelectedGender(gender);
                         setShowGenderDropdown(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                        selectedGender === gender ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-700'
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2 ${
+                        selectedGender === gender ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       <span>{gender === 'Menswear' ? '👔' : gender === 'Womenswear' ? '👗' : '👤'}</span>
@@ -198,7 +198,7 @@ export default function FeedView() {
             {userId && <NotificationBell userId={userId} />}
 
             {userProfile?.username && (
-              <Link href={`/profile/${userProfile.username}`} className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition">
+              <Link href={`/profile/${userProfile.username}`} className="w-8 h-8 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-700 hover:border-purple-400 transition">
                 {userProfile.avatar_url ? (
                   <Image src={userProfile.avatar_url} alt="" width={32} height={32} className="object-cover w-full h-full" />
                 ) : (
@@ -216,15 +216,15 @@ export default function FeedView() {
         {loading ? (
           <div className="space-y-6 mt-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div key={i} className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
                 <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                  <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
                   <div className="space-y-1">
-                    <div className="w-24 h-4 bg-gray-200 rounded animate-pulse" />
-                    <div className="w-16 h-3 bg-gray-100 rounded animate-pulse" />
+                    <div className="w-24 h-4 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+                    <div className="w-16 h-3 bg-zinc-100 dark:bg-zinc-800/50 rounded animate-pulse" />
                   </div>
                 </div>
-                <div className="aspect-[4/5] bg-gray-200 animate-pulse" />
+                <div className="aspect-[4/5] bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
               </div>
             ))}
           </div>
@@ -233,15 +233,15 @@ export default function FeedView() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-4xl mx-auto mb-4">
               📸
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Your feed is empty</h3>
-            <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Your feed is empty</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6 max-w-xs mx-auto">
               Be the first to post something or explore top posts!
             </p>
             <div className="flex gap-3 justify-center">
               <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-md">
                 Create Post
               </Link>
-              <Link href="/top" className="border-2 border-gray-200 bg-white text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition">
+              <Link href="/top" className="border-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 px-6 py-3 rounded-xl font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                 Top Posts
               </Link>
             </div>

@@ -230,10 +230,10 @@ export default function ProfilePage() {
   const isAI = ['vance', 'kiki', 'oracle'].includes(profile.user.username.toLowerCase());
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-black">
 
       {/* ─── Profile header ─── */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white dark:bg-zinc-900 dark:border-b dark:border-zinc-800 shadow-sm">
 
         {/* Cover banner */}
         <div className="relative h-44 md:h-56 overflow-hidden bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400">
@@ -280,13 +280,13 @@ export default function ProfilePage() {
                   <Link href="/create" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-md whitespace-nowrap">
                     + Post
                   </Link>
-                  <Link href="/edit-profile" className="border border-gray-300 bg-white text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition whitespace-nowrap">
+                  <Link href="/edit-profile" className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition whitespace-nowrap">
                     Edit
                   </Link>
                   <button
                     onClick={copyLink}
                     title="Share profile"
-                    className="border border-gray-300 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
+                    className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
                   >
                     {copied
                       ? <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -298,14 +298,14 @@ export default function ProfilePage() {
                 <>
                   <button
                     onClick={handleFollow}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm whitespace-nowrap ${isFollowing ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-md'}`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm whitespace-nowrap ${isFollowing ? 'border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-md'}`}
                   >
                     {isFollowing ? '✓ Following' : 'Follow'}
                   </button>
                   <button
                     onClick={handleMessage}
                     disabled={messagingLoading}
-                    className="border border-purple-400 bg-white text-purple-600 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-purple-50 transition whitespace-nowrap disabled:opacity-50 flex items-center gap-1.5"
+                    className="border border-purple-400 dark:border-purple-600 bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-purple-50 dark:hover:bg-purple-900/30 transition whitespace-nowrap disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                   <button
                     onClick={copyLink}
                     title="Share profile"
-                    className="border border-gray-300 bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 transition"
+                    className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
                   >
                     {copied
                       ? <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -330,7 +330,7 @@ export default function ProfilePage() {
           {/* Name, bio, stars, link */}
           <div className="mb-5">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h1 className="text-xl font-black text-gray-900">
+              <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
                 {profile.user.display_name || `@${profile.user.username}`}
               </h1>
               {isAI && (
@@ -345,31 +345,31 @@ export default function ProfilePage() {
               )}
             </div>
             {profile.user.display_name && (
-              <p className="text-gray-500 text-sm font-medium">@{profile.user.username}</p>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">@{profile.user.username}</p>
             )}
-            <p className="text-gray-400 text-xs mt-0.5">
+            <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-0.5">
               Member since {new Date(profile.user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
             {profile.user.bio && (
-              <p className="text-gray-700 text-sm mt-2 leading-relaxed">{profile.user.bio}</p>
+              <p className="text-zinc-700 dark:text-zinc-300 text-sm mt-2 leading-relaxed">{profile.user.bio}</p>
             )}
             {/* Social links */}
             {(profile.user.instagram || profile.user.tiktok || profile.user.twitter || profile.user.website) && (
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 {profile.user.instagram && (
-                  <a href={`https://instagram.com/${profile.user.instagram}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-pink-600 transition">
+                  <a href={`https://instagram.com/${profile.user.instagram}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-pink-600 transition">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                     @{profile.user.instagram}
                   </a>
                 )}
                 {profile.user.tiktok && (
-                  <a href={`https://tiktok.com/@${profile.user.tiktok}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition">
+                  <a href={`https://tiktok.com/@${profile.user.tiktok}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46 6.28 6.28 0 001.86-4.48V8.77a8.18 8.18 0 004.72 1.5v-3.4a4.85 4.85 0 01-1-.18z"/></svg>
                     @{profile.user.tiktok}
                   </a>
                 )}
                 {profile.user.twitter && (
-                  <a href={`https://x.com/${profile.user.twitter}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 transition">
+                  <a href={`https://x.com/${profile.user.twitter}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                     @{profile.user.twitter}
                   </a>
@@ -385,10 +385,10 @@ export default function ProfilePage() {
             {profile.averageRating > 0 && (
               <div className="flex items-center gap-1 mt-3">
                 {[1, 2, 3, 4, 5].map(s => (
-                  <span key={s} className={`text-lg leading-none ${s <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                  <span key={s} className={`text-lg leading-none ${s <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-zinc-200 dark:text-zinc-700'}`}>★</span>
                 ))}
-                <span className="text-sm font-bold text-gray-700 ml-1">{profile.averageRating.toFixed(2)}</span>
-                <span className="text-xs text-gray-400 ml-0.5">/ 5.00</span>
+                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 ml-1">{profile.averageRating.toFixed(2)}</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-0.5">/ 5.00</span>
               </div>
             )}
             <button onClick={copyLink} className="flex items-center gap-1.5 mt-2 text-purple-600 text-xs font-medium hover:text-purple-800 transition">
@@ -400,7 +400,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats bar — Posts | Followers | Following | Ratings | Avg ★ */}
-          <div className="grid grid-cols-5 py-4 border-t border-gray-100">
+          <div className="grid grid-cols-5 py-4 border-t border-zinc-100 dark:border-zinc-800">
             {[
               { label: 'Posts',     value: profile.postCount, gold: false, onClick: undefined },
               { label: 'Followers', value: followersCount,    gold: false, onClick: () => openFollowModal('followers') },
@@ -409,8 +409,8 @@ export default function ProfilePage() {
               { label: 'Avg ★',    value: profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—', gold: true, onClick: undefined },
             ].map(stat => (
               <div key={stat.label} onClick={stat.onClick} className={`flex flex-col items-center text-center transition select-none ${stat.onClick ? 'cursor-pointer hover:opacity-70' : ''}`}>
-                <span className={`text-lg font-black leading-none ${stat.gold ? 'text-yellow-500' : 'text-gray-900'}`}>{stat.value}</span>
-                <span className="text-xs text-gray-400 mt-1 leading-none">{stat.label}</span>
+                <span className={`text-lg font-black leading-none ${stat.gold ? 'text-yellow-500' : 'text-zinc-900 dark:text-zinc-100'}`}>{stat.value}</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 leading-none">{stat.label}</span>
               </div>
             ))}
           </div>
@@ -418,10 +418,10 @@ export default function ProfilePage() {
 
         {/* ─── Fashion Rating Breakdown (dimensional averages) ─── */}
         {profile.dimensionalAverages && (
-          <div className="bg-white mt-2 border-b border-gray-100">
+          <div className="bg-white dark:bg-zinc-900 mt-2 border-b dark:border-t border-zinc-100 dark:border-zinc-800">
             <div className="max-w-3xl mx-auto px-4 py-4">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-900/50">
+                <h3 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                   <span>👗</span> Fashion Rating Breakdown
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -431,12 +431,12 @@ export default function ProfilePage() {
                     { label: 'Color', value: profile.dimensionalAverages.colorHarmony, icon: '🎨' },
                     { label: 'Occasion', value: profile.dimensionalAverages.occasionMatch, icon: '📅' },
                   ].map(dim => (
-                    <div key={dim.label} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
-                      <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                    <div key={dim.label} className="flex items-center justify-between bg-white dark:bg-zinc-800 rounded-lg px-3 py-2">
+                      <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
                         <span>{dim.icon}</span>
                         {dim.label}
                       </span>
-                      <span className="text-sm font-black text-gray-900">
+                      <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">
                         {dim.value.toFixed(1)}★
                       </span>
                     </div>
@@ -465,15 +465,15 @@ export default function ProfilePage() {
 
       {/* ─── Category highlights (story-circles) ─── */}
       {categories.length > 0 && (
-        <div className="bg-white mt-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-zinc-900 mt-2 border-b dark:border-t border-zinc-100 dark:border-zinc-800">
           <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex gap-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {categories.map((cat: string) => (
                 <div key={cat} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-gray-200 group-hover:border-purple-400 group-hover:shadow-md transition-all duration-200 flex items-center justify-center text-2xl">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-zinc-200 dark:border-zinc-700 group-hover:border-purple-400 group-hover:shadow-md transition-all duration-200 flex items-center justify-center text-2xl">
                     {catEmoji[cat?.toLowerCase()] || '📌'}
                   </div>
-                  <span className="text-xs text-gray-600 capitalize font-medium">{cat}</span>
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400 capitalize font-medium">{cat}</span>
                 </div>
               ))}
             </div>
@@ -482,12 +482,12 @@ export default function ProfilePage() {
       )}
 
       {/* ─── Tab bar ─── */}
-      <div className="bg-white mt-2 border-b border-gray-100 sticky top-0 z-20">
+      <div className="bg-white dark:bg-zinc-900 mt-2 border-b border-zinc-100 dark:border-zinc-800 sticky top-0 z-20">
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex">
             <button
               onClick={() => setActiveTab('posts')}
-              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'posts' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'posts' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -496,7 +496,7 @@ export default function ProfilePage() {
             </button>
             <button
               onClick={() => setActiveTab('top')}
-              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'top' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'top' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -519,7 +519,7 @@ export default function ProfilePage() {
                     setSavedLoading(false);
                   }
                 }}
-                className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'saved' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                className={`flex-1 py-3.5 flex items-center justify-center gap-2 text-sm font-bold border-b-2 transition ${activeTab === 'saved' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -539,8 +539,8 @@ export default function ProfilePage() {
           profile.posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 px-4">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-5xl mb-4">📸</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No posts yet</h3>
-              <p className="text-gray-400 text-center text-sm max-w-xs">
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">No posts yet</h3>
+              <p className="text-zinc-400 dark:text-zinc-500 text-center text-sm max-w-xs">
                 {isOwnProfile ? 'Share something and let the world rate it!' : 'Nothing here yet — check back soon.'}
               </p>
               {isOwnProfile && (
@@ -550,9 +550,9 @@ export default function ProfilePage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-px bg-gray-200 mt-2">
+            <div className="grid grid-cols-3 gap-px bg-zinc-200 dark:bg-zinc-800 mt-2">
               {profile.posts.map((post: any) => (
-                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-gray-100 overflow-hidden group">
+                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-zinc-100 dark:bg-black overflow-hidden group">
                   {post.media_type === 'video' ? (
                     <>
                       <video
@@ -586,7 +586,7 @@ export default function ProfilePage() {
                       <span className="text-yellow-300">★</span>
                       <span>{post.average_rating > 0 ? post.average_rating.toFixed(1) : '—'}</span>
                     </div>
-                    {post.rating_count > 0 && <div className="text-gray-300 text-xs">{post.rating_count} ratings</div>}
+                    {post.rating_count > 0 && <div className="text-zinc-300 dark:text-zinc-400 text-xs">{post.rating_count} ratings</div>}
                     <p className="text-white/80 text-xs mt-1 text-center line-clamp-2 leading-tight">{post.caption}</p>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -604,12 +604,12 @@ export default function ProfilePage() {
             {ratedPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 px-4">
                 <div className="w-20 h-20 rounded-full bg-yellow-50 flex items-center justify-center text-4xl mb-4">⭐</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No ratings yet</h3>
-                <p className="text-gray-400 text-sm text-center">Posts that get rated will appear here, ranked by score.</p>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">No ratings yet</h3>
+                <p className="text-zinc-400 dark:text-zinc-500 text-sm text-center">Posts that get rated will appear here, ranked by score.</p>
               </div>
             ) : (
               ratedPosts.map((post: any, index: number) => (
-                <Link key={post.id} href={`/post/${post.id}`} className="flex gap-4 bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 group border border-gray-50">
+                <Link key={post.id} href={`/post/${post.id}`} className="flex gap-4 bg-white dark:bg-zinc-900 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 group border border-zinc-50 dark:border-zinc-800">
                   <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
                     {post.media_type === 'video' ? (
                       <>
@@ -626,20 +626,20 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">{post.caption}</p>
-                      <span className={`flex-shrink-0 text-xs font-black w-8 h-6 flex items-center justify-center rounded-full ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-gray-200 text-gray-600' : index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400'}`}>
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-tight">{post.caption}</p>
+                      <span className={`flex-shrink-0 text-xs font-black w-8 h-6 flex items-center justify-center rounded-full ${index === 0 ? 'bg-yellow-100 text-yellow-700' : index === 1 ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300' : index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500'}`}>
                         #{index + 1}
                       </span>
                     </div>
                     <div className="flex items-center gap-0.5 mb-1.5">
                       {[1, 2, 3, 4, 5].map(s => (
-                        <span key={s} className={`text-base leading-none ${s <= Math.round(post.average_rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                        <span key={s} className={`text-base leading-none ${s <= Math.round(post.average_rating) ? 'text-yellow-400' : 'text-zinc-200 dark:text-zinc-700'}`}>★</span>
                       ))}
-                      <span className="text-sm font-black text-gray-900 ml-2">{post.average_rating.toFixed(1)}</span>
+                      <span className="text-sm font-black text-zinc-900 dark:text-zinc-100 ml-2">{post.average_rating.toFixed(1)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{post.rating_count} {post.rating_count === 1 ? 'rating' : 'ratings'}</span>
-                      <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                      <span className="text-xs text-zinc-400 dark:text-zinc-500">{post.rating_count} {post.rating_count === 1 ? 'rating' : 'ratings'}</span>
+                      <span className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
                       <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full capitalize font-medium">{post.category}</span>
                     </div>
                   </div>
@@ -658,8 +658,8 @@ export default function ProfilePage() {
           ) : savedPosts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 px-4">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-5xl mb-4">🔖</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No saved posts</h3>
-              <p className="text-gray-400 text-center text-sm max-w-xs">
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">No saved posts</h3>
+              <p className="text-zinc-400 dark:text-zinc-500 text-center text-sm max-w-xs">
                 Tap the bookmark icon on posts to save them here for later!
               </p>
               <Link href="/" className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 transition shadow-md">
@@ -667,9 +667,9 @@ export default function ProfilePage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-px bg-gray-200 mt-2">
+            <div className="grid grid-cols-3 gap-px bg-zinc-200 dark:bg-zinc-800 mt-2">
               {savedPosts.map((post: any) => (
-                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-gray-100 overflow-hidden group">
+                <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square bg-zinc-100 dark:bg-black overflow-hidden group">
                   {post.media_type === 'video' ? (
                     <>
                       <video
@@ -704,7 +704,7 @@ export default function ProfilePage() {
                       <span className="text-yellow-300">★</span>
                       <span>{post.average_rating > 0 ? post.average_rating.toFixed(1) : '—'}</span>
                     </div>
-                    {post.rating_count > 0 && <div className="text-gray-300 text-xs">{post.rating_count} ratings</div>}
+                    {post.rating_count > 0 && <div className="text-zinc-300 dark:text-zinc-400 text-xs">{post.rating_count} ratings</div>}
                     <p className="text-white/80 text-xs mt-1 text-center line-clamp-2 leading-tight">{post.caption}</p>
                     <p className="text-purple-300 text-xs mt-1">@{post.users?.username}</p>
                   </div>
@@ -718,10 +718,10 @@ export default function ProfilePage() {
       {/* ─── Guest CTA banner (only for non-logged-in visitors) ─── */}
       {!currentUser && profile.posts.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-20 px-4">
-          <div className="max-w-sm mx-auto mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4">
+          <div className="max-w-sm mx-auto mb-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-100 dark:border-zinc-800 p-4 flex items-center gap-4">
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-900">Join HeyRateMe</p>
-              <p className="text-xs text-gray-500 mt-0.5">Follow {username} and rate their posts</p>
+              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Join HeyRateMe</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Follow {username} and rate their posts</p>
             </div>
             <Link href="/login" className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-md">
               Sign In
@@ -735,23 +735,23 @@ export default function ProfilePage() {
       {/* ─── Followers / Following Modal ─── */}
       {followModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setFollowModal(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900 text-lg capitalize">{followModal}</h2>
-              <button onClick={() => setFollowModal(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <h2 className="font-bold text-zinc-900 dark:text-zinc-100 text-lg capitalize">{followModal}</h2>
+              <button onClick={() => setFollowModal(null)} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 text-2xl leading-none">&times;</button>
             </div>
             <div className="overflow-y-auto flex-1 py-2">
               {followModalLoading ? (
-                <div className="flex justify-center py-10 text-gray-400 text-sm">Loading…</div>
+                <div className="flex justify-center py-10 text-zinc-400 dark:text-zinc-500 text-sm">Loading…</div>
               ) : followModalUsers.length === 0 ? (
-                <div className="flex justify-center py-10 text-gray-400 text-sm">No {followModal} yet</div>
+                <div className="flex justify-center py-10 text-zinc-400 dark:text-zinc-500 text-sm">No {followModal} yet</div>
               ) : (
                 followModalUsers.map((u: any) => (
                   <Link
                     key={u.id}
                     href={`/${u.username}`}
                     onClick={() => setFollowModal(null)}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition"
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
                   >
                     {u.avatar_url ? (
                       <Image src={u.avatar_url} alt={u.username} width={40} height={40} className="rounded-full object-cover w-10 h-10" />
@@ -761,7 +761,7 @@ export default function ProfilePage() {
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm flex items-center">
+                      <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm flex items-center">
                         {u.display_name || u.username}
                         {['vance', 'kiki', 'oracle'].includes(u.username.toLowerCase()) && (
                           <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm" title="Official AI Critic">
@@ -769,7 +769,7 @@ export default function ProfilePage() {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-gray-400">@{u.username}</p>
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500">@{u.username}</p>
                     </div>
                   </Link>
                 ))
