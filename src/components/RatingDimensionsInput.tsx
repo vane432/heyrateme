@@ -19,14 +19,50 @@ interface RatingDimensionsInputProps {
 interface DimensionConfig {
   key: keyof RatingDimensions;
   label: string;
+  emoji: string;
 }
 
-const dimensions: DimensionConfig[] = [
-  { key: 'style', label: 'Style' },
-  { key: 'fit', label: 'Fit' },
-  { key: 'colorHarmony', label: 'Color Harmony' },
-  { key: 'occasionMatch', label: 'Occasion' },
+const DIMENSIONS: DimensionConfig[] = [
+  { key: 'style',         label: 'Style',         emoji: '✦' },
+  { key: 'fit',           label: 'Fit',            emoji: '✦' },
+  { key: 'colorHarmony',  label: 'Color',          emoji: '✦' },
+  { key: 'occasionMatch', label: 'Occasion',       emoji: '✦' },
 ];
+
+function StarRow({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  disabled: boolean;
+}) {
+  const [hover, setHover] = useState(0);
+  const display = hover || value;
+
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && onChange(star)}
+          onMouseEnter={() => !disabled && setHover(star)}
+          onMouseLeave={() => !disabled && setHover(0)}
+          className={`text-xl leading-none transition-transform ${
+            disabled ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'
+          }`}
+        >
+          <span className={star <= display ? 'text-[#FF385C]' : 'text-gray-200'}>
+            ★
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function RatingDimensionsInput({
   postId,
@@ -42,7 +78,7 @@ export default function RatingDimensionsInput({
   const [ratings, setRatings] = useState<RatingDimensions>(
     currentDimensions || { style: 0, fit: 0, colorHarmony: 0, occasionMatch: 0 }
   );
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
@@ -50,32 +86,29 @@ export default function RatingDimensionsInput({
   const canEdit = hasRated && createdAt ? canEditRating(createdAt) : true;
   const isDisabled = readonly || isOwner || (hasRated && !canEdit);
 
+  const ratedCount = Object.values(ratings).filter(r => r > 0).length;
+  const allRated = ratedCount === 4;
+
   useEffect(() => {
     if (hasRated && createdAt && canEdit) {
-      const updateTimer = () => {
-        const remaining = getRatingEditTimeRemaining(createdAt);
-        setTimeRemaining(remaining);
-      };
-
-      updateTimer();
-      const interval = setInterval(updateTimer, 1000);
-      return () => clearInterval(interval);
+      const update = () => setTimeRemaining(getRatingEditTimeRemaining(createdAt));
+      update();
+      const id = setInterval(update, 1000);
+      return () => clearInterval(id);
     }
   }, [hasRated, createdAt, canEdit]);
 
-  // Auto-submit when all dimensions are rated (only after user interaction)
+  // Auto-submit once all four dimensions are rated
   useEffect(() => {
-    const allRated = ratings.style > 0 && ratings.fit > 0 && ratings.colorHarmony > 0 && ratings.occasionMatch > 0;
-
     if (allRated && !isSubmitting && !isDisabled && hasUserInteracted) {
       handleAutoSubmit();
     }
   }, [ratings, isSubmitting, isDisabled, hasUserInteracted]);
 
-  const handleSliderChange = (dimension: keyof RatingDimensions, value: number) => {
+  const handleChange = (key: keyof RatingDimensions, value: number) => {
     if (isDisabled || isSubmitting) return;
     setHasUserInteracted(true);
-    setRatings(prev => ({ ...prev, [dimension]: value }));
+    setRatings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleAutoSubmit = async () => {
@@ -83,112 +116,103 @@ export default function RatingDimensionsInput({
     try {
       await onRate?.(ratings);
       setIsSubmitted(true);
-
-      // Brief delay to show success animation
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 1500);
-    } catch (error) {
-      console.error('Failed to submit rating:', error);
+      setTimeout(() => setIsSubmitted(false), 1500);
+    } catch (err) {
+      console.error('Failed to submit rating:', err);
       setIsSubmitting(false);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
-  // If owner, show message
   if (isOwner) {
     return (
-      <div className="text-center py-6 text-sm text-gray-400">
-        You cannot rate your own post
-      </div>
+      <p className="text-xs text-gray-400 text-center py-3">
+        You can't rate your own post
+      </p>
     );
   }
 
-  // Show success animation after submission
   if (isSubmitted) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="flex items-center gap-2 text-green-600 animate-pulse">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          <span className="text-sm font-medium">Rating submitted!</span>
-        </div>
+      <div className="flex items-center justify-center gap-2 py-5 text-[#FF385C]">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        </svg>
+        <span className="text-sm font-semibold">Rating submitted!</span>
       </div>
     );
   }
 
-  // If not rated and not owner, show rating interface
   if (!hasRated || canEdit) {
     return (
-      <div className="w-full backdrop-blur-sm bg-white/80 border border-white/20 rounded-2xl p-4 shadow-xl">
-        {/* Dimension ratings */}
-        <div className="space-y-6">
-          {dimensions.map((dim) => {
-            const currentRating = ratings[dim.key];
+      <div className="w-full py-2">
+
+        {/* Prompt */}
+        <p className="text-[11px] text-gray-400 uppercase tracking-widest mb-3 font-medium">
+          Rate this outfit
+        </p>
+
+        {/* Star rows — one per dimension */}
+        <div className="space-y-2.5">
+          {DIMENSIONS.map((dim, i) => {
+            const val = ratings[dim.key];
+            const isActive = val > 0;
+            // Dim out future dimensions slightly until previous is rated
+            const isPending = !isActive && i > ratedCount;
 
             return (
-              <div key={dim.key} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{dim.label}</span>
-                  <span className="text-sm font-medium text-gray-600">
-                    {currentRating > 0 ? currentRating : '—'}
-                  </span>
-                </div>
-
-                {/* Segmented bar slider - full width */}
-                <div className="flex items-center gap-1 w-full">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => handleSliderChange(dim.key, value)}
-                      disabled={isDisabled || isSubmitting}
-                      className={`flex-1 h-4 rounded-full transition-all duration-200 ${
-                        value <= currentRating
-                          ? 'bg-black shadow-sm'
-                          : 'bg-gray-200 hover:bg-gray-300'
-                      } ${isDisabled || isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'}`}
-                    />
-                  ))}
-                </div>
+              <div
+                key={dim.key}
+                className={`flex items-center justify-between transition-opacity ${
+                  isPending ? 'opacity-40' : 'opacity-100'
+                }`}
+              >
+                <span className={`text-xs font-semibold w-16 ${
+                  isActive ? 'text-gray-800' : 'text-gray-400'
+                }`}>
+                  {dim.label}
+                </span>
+                <StarRow
+                  value={val}
+                  onChange={v => handleChange(dim.key, v)}
+                  disabled={isDisabled || isSubmitting}
+                />
+                <span className="text-xs text-gray-400 w-4 text-right">
+                  {val > 0 ? val : ''}
+                </span>
               </div>
             );
           })}
         </div>
 
+        {/* Coral progress dots */}
+        <div className="flex items-center gap-1.5 mt-4">
+          {DIMENSIONS.map((dim, i) => (
+            <div
+              key={dim.key}
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                ratings[dim.key] > 0 ? 'bg-[#FF385C]' : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+        <p className="text-[10px] text-gray-400 mt-1 text-right">
+          {ratedCount}/4
+        </p>
+
         {/* Edit timer */}
         {hasRated && canEdit && timeRemaining > 0 && (
-          <div className="text-center text-xs text-gray-500 mt-4">
-            Edit time remaining: {formatTime(timeRemaining)}
-          </div>
+          <p className="text-[10px] text-gray-400 text-center mt-2">
+            Edit window: {formatTime(timeRemaining)}
+          </p>
         )}
-
-        {/* Progress indicator */}
-        <div className="mt-6">
-          <div className="flex justify-between text-xs text-gray-400 mb-2">
-            <span>Progress</span>
-            <span>{Object.values(ratings).filter(r => r > 0).length}/4</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1">
-            <div
-              className="bg-black h-1 rounded-full transition-all duration-300"
-              style={{ width: `${(Object.values(ratings).filter(r => r > 0).length / 4) * 100}%` }}
-            />
-          </div>
-        </div>
       </div>
     );
   }
 
-  // If rated and edit window expired, show message
   return (
-    <div className="text-center py-6 text-sm text-gray-400">
-      Rating submitted!
-    </div>
+    <p className="text-xs text-gray-400 text-center py-3">Rating submitted!</p>
   );
 }

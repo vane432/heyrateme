@@ -10,18 +10,11 @@ interface DimensionalRatingDisplayProps {
   showUserRatings?: boolean;
 }
 
-interface DimensionInfo {
-  key: keyof RatingDimensions;
-  label: string;
-  icon: string;
-  shortLabel: string;
-}
-
-const dimensions: DimensionInfo[] = [
-  { key: 'style', label: 'Style', icon: '✨', shortLabel: 'Style' },
-  { key: 'fit', label: 'Fit', icon: '👔', shortLabel: 'Fit' },
-  { key: 'colorHarmony', label: 'Color', icon: '🎨', shortLabel: 'Color' },
-  { key: 'occasionMatch', label: 'Occasion', icon: '📅', shortLabel: 'Occasion' },
+const DIMENSIONS: { key: keyof RatingDimensions; label: string }[] = [
+  { key: 'style',         label: 'Style'    },
+  { key: 'fit',           label: 'Fit'      },
+  { key: 'colorHarmony',  label: 'Color'    },
+  { key: 'occasionMatch', label: 'Occasion' },
 ];
 
 export default function DimensionalRatingDisplay({
@@ -32,72 +25,60 @@ export default function DimensionalRatingDisplay({
   showUserRatings = true,
 }: DimensionalRatingDisplayProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 rounded-xl p-4 border border-purple-100">
-      {/* Overall rating header */}
-      <div className="flex items-center justify-between mb-3 pb-3 border-b border-purple-200">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">⭐</span>
-          <div>
-            <div className="text-lg font-black text-gray-900">
-              {overallRating.toFixed(1)}★
-            </div>
-            <div className="text-xs text-gray-500">{ratingCount} ratings</div>
-          </div>
-        </div>
-        <div className="text-xs font-medium text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
-          Fashion Rating
-        </div>
+    <div className="w-full">
+
+      {/* Overall score row */}
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="text-2xl font-black text-gray-900 leading-none">
+          {overallRating.toFixed(1)}
+        </span>
+        <span className="text-[#FF385C] text-lg leading-none">★</span>
+        <span className="text-xs text-gray-400">
+          {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+        </span>
       </div>
 
-      {/* Dimensional breakdown */}
-      <div className="space-y-2">
-        <div className="text-xs font-semibold text-gray-600 mb-2">Rating Breakdown:</div>
-        <div className="grid grid-cols-2 gap-2">
-          {dimensions.map((dim) => {
-            const avgValue = dimensionalAverages[dim.key];
-            const userValue = userDimensionalRatings?.[dim.key];
+      {/* Dimension bars */}
+      <div className="space-y-1.5">
+        {DIMENSIONS.map(dim => {
+          const avg = dimensionalAverages[dim.key];
+          const userVal = userDimensionalRatings?.[dim.key];
+          const pct = (avg / 5) * 100;
 
-            return (
-              <div
-                key={dim.key}
-                className="bg-white rounded-lg p-2 shadow-sm flex items-center justify-between"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">{dim.icon}</span>
-                  <span className="text-xs font-medium text-gray-700">{dim.shortLabel}</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-black text-gray-900">
-                    {avgValue.toFixed(1)}★
-                  </div>
-                  {showUserRatings && userValue !== undefined && userValue > 0 && (
-                    <div className="text-xs text-purple-600">You: {userValue}★</div>
-                  )}
-                </div>
+          return (
+            <div key={dim.key} className="flex items-center gap-2">
+              {/* Label */}
+              <span className="text-[11px] text-gray-400 w-14 flex-shrink-0">
+                {dim.label}
+              </span>
+
+              {/* Bar track */}
+              <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${pct}%`,
+                    background: 'linear-gradient(90deg, #FF385C, #FF7043)',
+                  }}
+                />
               </div>
-            );
-          })}
-        </div>
+
+              {/* Score */}
+              <span className="text-[11px] font-semibold text-gray-700 w-6 text-right flex-shrink-0">
+                {avg.toFixed(1)}
+              </span>
+
+              {/* User's own score (subtle, only if they rated) */}
+              {showUserRatings && userVal !== undefined && userVal > 0 && (
+                <span className="text-[10px] text-[#FF385C] w-8 flex-shrink-0">
+                  you {userVal}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Your rating summary */}
-      {showUserRatings && userDimensionalRatings && (
-        <div className="mt-3 pt-3 border-t border-purple-200">
-          <div className="text-xs text-gray-600 text-center">
-            <span className="font-medium">Your rating:</span>{' '}
-            <span className="text-purple-600 font-bold">
-              {(
-                (userDimensionalRatings.style +
-                  userDimensionalRatings.fit +
-                  userDimensionalRatings.colorHarmony +
-                  userDimensionalRatings.occasionMatch) /
-                4
-              ).toFixed(1)}
-              ★
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
