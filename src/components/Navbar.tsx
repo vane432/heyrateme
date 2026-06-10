@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import NotificationBell from './NotificationBell';
@@ -12,6 +12,8 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -35,6 +37,17 @@ export default function Navbar() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleSignOut = async () => {
@@ -72,13 +85,40 @@ export default function Navbar() {
                     </svg>
                   </button>
 
-                  <button onClick={handleSignOut} className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 font-medium">
-                    Sign Out
-                  </button>
                   {username && (
-                    <Link href={`/${username}`} className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                      {username[0].toUpperCase()}
-                    </Link>
+                    <div className="relative" ref={profileMenuRef}>
+                      <button
+                        onClick={() => setShowProfileMenu(!showProfileMenu)}
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shrink-0 hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 dark:focus:ring-offset-[#09090B]"
+                        aria-label="Profile menu"
+                      >
+                        {username[0].toUpperCase()}
+                      </button>
+
+                      {showProfileMenu && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 py-2 z-50">
+                          <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
+                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">@{username}</p>
+                          </div>
+                          <Link
+                            href={`/${username}`}
+                            onClick={() => setShowProfileMenu(false)}
+                            className="block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            Profile
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              handleSignOut();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                          >
+                            Sign Out
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               ) : (
