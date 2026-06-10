@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadImage, uploadVideo, createPost, checkRateLimit, getVideoDuration } from '@/lib/queries';
+import { checkRateLimit, getVideoDuration } from '@/lib/queries';
 import { CATEGORIES, GENDERS, type Gender } from '@/lib/types';
 import { validateMediaFile, validateCaption, validateVideoDuration, validateGenderForFashion } from '@/lib/validation';
 import Image from 'next/image';
@@ -87,29 +87,38 @@ export default function UploadPost({ userId, onSuccess }: UploadPostProps) {
       const genderError = validateGenderForFashion(gender);
       if (genderError) throw new Error(genderError.message);
 
-      // 3. Upload media
-      let mediaUrl: string;
-      let duration: number | undefined;
+      // 3. Convert file to base64 to send to our new API route
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(mediaFile);
+      });
+      const mediaBase64 = await base64Promise;
+      const duration = mediaType === 'video' ? await getVideoDuration(mediaFile) : undefined;
 
-      if (mediaType === 'video') {
-        mediaUrl = await uploadVideo(mediaFile, userId);
-        duration = await getVideoDuration(mediaFile);
-      } else {
-        mediaUrl = await uploadImage(mediaFile, userId);
+      // 4. Call our new secure API route for moderation and upload
+      const response = await fetch('/api/posts/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              userId,
+              mediaBase64,
+              mimeType: mediaFile.type,
+              caption: caption.trim(),
+              category,
+              mediaType,
+              fileName: mediaFile.name,
+              fileSizeBytes: mediaFile.size,
+              durationSeconds: duration,
+              gender,
+          })
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+          throw new Error(json.error || 'Upload failed during server processing.');
       }
-
-      // 4. Create post
-      await createPost(
-        userId,
-        mediaUrl,
-        caption.trim(),
-        category,
-        mediaType || 'image',
-        duration,
-        mediaFile.size,
-        null, // occasion (keeping for backward compatibility)
-        gender
-      );
 
       // 5. Reset
       setCaption('');
