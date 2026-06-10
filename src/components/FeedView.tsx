@@ -75,8 +75,8 @@ export default function FeedView() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top nav */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 z-30">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="fixed top-0 left-0 w-full h-12 z-40 border-b bg-white dark:bg-[#09090B] border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-2xl mx-auto px-4 h-full flex items-center justify-between">
           <Link href="/" className="text-xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             HeyRateMe
           </Link>
@@ -95,10 +95,10 @@ export default function FeedView() {
                   setShowCategoryDropdown(!showCategoryDropdown);
                   setShowGenderDropdown(false);
                 }}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 title="Search categories"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-zinc-900 dark:text-zinc-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
@@ -153,10 +153,10 @@ export default function FeedView() {
                   setShowGenderDropdown(!showGenderDropdown);
                   setShowCategoryDropdown(false);
                 }}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 title="Filter by gender"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-zinc-900 dark:text-zinc-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </button>
@@ -212,7 +212,7 @@ export default function FeedView() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 pt-16">
         {loading ? (
           <div className="space-y-6 mt-4">
             {[1, 2, 3].map(i => (
