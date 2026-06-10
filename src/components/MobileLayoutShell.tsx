@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import Navbar from './Navbar';
 
 export default function MobileLayoutShell({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState<string | null>(null);
+  const pathname = usePathname();
 
   // Fetch session username dynamically for the profile tab
   useEffect(() => {
@@ -23,10 +26,20 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
     fetchUser();
   }, []);
 
+  // Don't show app shell on landing page or auth routes
+  if (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/login')) {
+    return <>{children}</>;
+  }
+
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col bg-black text-white">
+    <div className="w-full md:min-h-screen md:h-auto h-[100dvh] overflow-hidden md:overflow-visible flex flex-col bg-black md:bg-gray-50 text-white md:text-gray-900">
+      {/* ── Desktop Navbar (Hidden on Mobile) ── */}
+      <div className="hidden md:block">
+        <Navbar />
+      </div>
+
       {/* ── Fixed Top Header Module ── */}
-      <header className="fixed top-0 left-0 w-full h-14 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-4 z-40">
+      <header className="md:hidden fixed top-0 left-0 w-full h-14 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-4 z-40">
         <Link href="/" className="text-xl font-bold tracking-tight">
           heyrate.me
         </Link>
@@ -52,14 +65,14 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
 
       {/* ── Scroll-Isolated Content Area ── */}
       {/* hide scrollbar but allow scrolling using standard css approaches */}
-      <main className="flex-1 overflow-y-auto pt-14 pb-16 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <main className="flex-1 md:overflow-visible md:pt-0 md:pb-0 overflow-y-auto pt-14 pb-[calc(4rem+env(safe-area-inset-bottom))] scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {children}
       </main>
 
       {/* ── Reachable Bottom App Tab Navigation ── */}
-      <nav className="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800 flex items-center justify-around z-40 pb-[env(safe-area-inset-bottom)] h-[calc(4rem+env(safe-area-inset-bottom))]">
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800 flex items-center justify-around z-40 pb-[env(safe-area-inset-bottom)] h-[calc(4rem+env(safe-area-inset-bottom))]">
         {/* Home */}
-        <Link href="/" className="p-2 hover:opacity-70 transition-opacity" aria-label="Home">
+        <Link href="/" className={`p-2 hover:opacity-70 transition-opacity ${pathname === '/' || pathname === '/feed' ? 'text-white' : 'text-zinc-500'}`} aria-label="Home">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
@@ -67,7 +80,7 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
         </Link>
 
         {/* Search */}
-        <Link href="/top" className="p-2 hover:opacity-70 transition-opacity" aria-label="Search">
+        <Link href="/top" className={`p-2 hover:opacity-70 transition-opacity ${pathname === '/top' ? 'text-white' : 'text-zinc-500'}`} aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
@@ -75,14 +88,14 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
         </Link>
 
         {/* Messages */}
-        <Link href="/messages" className="p-2 hover:opacity-70 transition-opacity" aria-label="Messages">
+        <Link href="/messages" className={`p-2 hover:opacity-70 transition-opacity ${pathname.startsWith('/messages') ? 'text-white' : 'text-zinc-500'}`} aria-label="Messages">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
           </svg>
         </Link>
 
         {/* Profile */}
-        <Link href={username ? `/${username}` : "/login"} className="p-2 hover:opacity-70 transition-opacity" aria-label="Profile">
+        <Link href={username ? `/${username}` : "/login"} className={`p-2 hover:opacity-70 transition-opacity ${pathname === `/${username}` ? 'text-white' : 'text-zinc-500'}`} aria-label="Profile">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="8" r="5" />
             <path d="M20 21a8 8 0 0 0-16 0" />
