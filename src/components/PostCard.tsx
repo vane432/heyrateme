@@ -425,22 +425,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
             ratingCount={ratingCount}
           />
 
-          {/* Compact dimensional breakdown — single pill row */}
-          {dimensionRow && (
-            <p className="text-[11px] text-gray-400 mt-1 flex flex-wrap gap-x-2">
-              {dimensionRow.map((d, i) => (
-                <span key={d.label}>
-                  {d.label} <span className="text-gray-600 font-medium">{d.val.toFixed(1)}★</span>
-                  {i < dimensionRow.length - 1 && <span className="ml-2 text-gray-300">·</span>}
-                </span>
-              ))}
-            </p>
-          )}
 
-          {/* Rating count — only one instance */}
-          <p className="text-[11px] text-gray-400 mt-0.5">
-            {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
-          </p>
         </div>
 
         {/* Caption */}
@@ -453,7 +438,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
 
         {/* ── Summon AI Critics (owner only) — slim pill buttons ─────────── */}
         {isOwner && (
-          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+          <div className="flex items-center justify-center gap-1.5 mb-2 flex-wrap">
             {/* Vance */}
             <button
               onClick={() => handleSummonAI('vance')}
