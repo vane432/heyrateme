@@ -164,7 +164,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
     if (!showComments && comments.length === 0) {
       setLoadingComments(true);
       try {
-        const data = await getComments(post.id, 3);
+        const data = await getComments(post.id, userId, 3);
         setComments(data);
       } catch (error) {
         console.error('Failed to load comments:', error);

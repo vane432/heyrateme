@@ -26,7 +26,7 @@ export default function CommentList({ postId, userId, hasRated }: CommentListPro
     setLoading(true);
     setError('');
     try {
-      const data = await getComments(postId, 20);
+      const data = await getComments(postId, userId, 20);
       setComments(data);
       setHasMore(data.length === 20); // If we got exactly 20, there might be more
     } catch (err: any) {
