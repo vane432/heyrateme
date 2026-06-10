@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CommentWithUser } from '@/lib/types';
+import { likeComment, unlikeComment } from '@/lib/queries';
 
 interface CommentItemProps {
   comment: CommentWithUser;
@@ -14,8 +15,29 @@ interface CommentItemProps {
 export default function CommentItem({ comment, userId, onDelete }: CommentItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [likeCount, setLikeCount] = useState(comment.like_count);
+  const [userHasLiked, setUserHasLiked] = useState(comment.user_has_liked);
 
   const isOwner = userId === comment.user_id;
+
+  const handleLikeToggle = async () => {
+    if (!userId || isLiking) return;
+    setIsLiking(true);
+
+    const currentlyLiked = userHasLiked;
+    setUserHasLiked(!currentlyLiked);
+    setLikeCount(currentlyLiked ? likeCount - 1 : likeCount + 1);
+
+    try {
+      if (currentlyLiked) await unlikeComment(comment.id, userId);
+      else await likeComment(comment.id, userId);
+    } catch (error) {
+      setUserHasLiked(currentlyLiked);
+      setLikeCount(likeCount);
+    }
+    setIsLiking(false);
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -97,6 +119,26 @@ export default function CommentItem({ comment, userId, onDelete }: CommentItemPr
         <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words">
           {comment.content}
         </p>
+
+        {/* Like button */}
+        <div className="mt-2 flex items-center">
+          <button
+            onClick={handleLikeToggle}
+            disabled={!userId || isLiking}
+            className={`flex items-center gap-1 text-xs transition-colors ${
+              userHasLiked ? 'text-pink-500 font-semibold' : 'text-gray-400 hover:text-pink-500'
+            } disabled:opacity-50 disabled:hover:text-gray-400`}
+          >
+            <svg className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} stroke="currentColor" strokeWidth={2} fill="none" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.5l-7.682-7.682a4.5 4.5 0 010-6.364z"
+              />
+            </svg>
+            <span>{likeCount > 0 ? likeCount : 'Like'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

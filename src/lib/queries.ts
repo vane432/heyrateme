@@ -1217,8 +1217,8 @@ export async function deleteConversation(conversationId: string, userId: string)
 // ─── Comments ───
 
 // Get comments for a post with user info
-export async function getComments(postId: string, limit: number = 20): Promise<CommentWithUser[]> {
-  const { data, error } = await supabase
+export async function getComments(postId: string, userId?: string, limit: number = 20): Promise<CommentWithUser[]> {
+  const { data: comments, error } = await supabase
     .from('comments')
     .select(`
       *,
@@ -1226,6 +1226,9 @@ export async function getComments(postId: string, limit: number = 20): Promise<C
         id,
         username,
         avatar_url
+      ),
+      comment_likes (
+        user_id
       )
     `)
     .eq('post_id', postId)
@@ -1233,7 +1236,14 @@ export async function getComments(postId: string, limit: number = 20): Promise<C
     .limit(limit);
 
   if (error) throw error;
-  return (data || []) as CommentWithUser[];
+
+  const commentsWithLikes = (comments || []).map(comment => ({
+    ...comment,
+    like_count: comment.comment_likes.length,
+    user_has_liked: userId ? comment.comment_likes.some(like => like.user_id === userId) : false,
+  }));
+
+  return commentsWithLikes as CommentWithUser[];
 }
 
 // Create a comment
@@ -1241,7 +1251,7 @@ export async function createComment(
   postId: string,
   userId: string,
   content: string
-) {
+): Promise<CommentWithUser> {
   // Validate content length
   const trimmedContent = content.trim();
   if (trimmedContent.length === 0) {
@@ -1281,7 +1291,11 @@ export async function createComment(
     .single();
 
   if (error) throw error;
-  return data as CommentWithUser;
+  return {
+    ...data,
+    like_count: 0,
+    user_has_liked: false
+  } as CommentWithUser;
 }
 
 // Delete a comment (with ownership check)
@@ -1309,6 +1323,28 @@ export async function deleteComment(commentId: string, userId: string) {
     .eq('user_id', userId); // Extra safety check
 
   if (deleteError) throw deleteError;
+}
+
+// Like a comment
+export async function likeComment(commentId: string, userId: string) {
+  const { error } = await supabase
+    .from('comment_likes')
+    .insert({ comment_id: commentId, user_id: userId });
+
+  if (error && error.code !== '23505') { // Ignore duplicate errors
+    throw error;
+  }
+}
+
+// Unlike a comment
+export async function unlikeComment(commentId: string, userId: string) {
+  const { error } = await supabase
+    .from('comment_likes')
+    .delete()
+    .eq('comment_id', commentId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
 }
 
 // ─── AI Persona Critics ───

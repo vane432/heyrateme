@@ -155,6 +155,26 @@ export interface Database {
           created_at?: string
         }
       }
+      comment_likes: {
+        Row: {
+          id: string
+          comment_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comment_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          comment_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
     }
   }
 }
@@ -166,6 +186,8 @@ export type Comment = Database['public']['Tables']['comments']['Row']
 
 export type CommentWithUser = Comment & {
   users: User
+  like_count: number
+  user_has_liked: boolean
 }
 
 export const MEDIA_TYPES = ['image', 'video'] as const;
