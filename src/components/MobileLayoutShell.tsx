@@ -1,7 +1,28 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function MobileLayoutShell({ children }: { children: React.ReactNode }) {
+  const [username, setUsername] = useState<string | null>(null);
+
+  // Fetch session username dynamically for the profile tab
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', session.user.id)
+          .single();
+        if (data?.username) setUsername(data.username);
+      }
+    };
+    fetchUser();
+  }, []);
+
   return (
     <div className="w-full h-screen overflow-hidden flex flex-col bg-black text-white">
       {/* ── Fixed Top Header Module ── */}
@@ -46,7 +67,7 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
         </Link>
 
         {/* Search */}
-        <Link href="/search" className="p-2 hover:opacity-70 transition-opacity" aria-label="Search">
+        <Link href="/top" className="p-2 hover:opacity-70 transition-opacity" aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
@@ -61,7 +82,7 @@ export default function MobileLayoutShell({ children }: { children: React.ReactN
         </Link>
 
         {/* Profile */}
-        <Link href="/profile" className="p-2 hover:opacity-70 transition-opacity" aria-label="Profile">
+        <Link href={username ? `/${username}` : "/login"} className="p-2 hover:opacity-70 transition-opacity" aria-label="Profile">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="8" r="5" />
             <path d="M20 21a8 8 0 0 0-16 0" />

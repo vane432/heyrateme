@@ -388,24 +388,22 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       </div>
 
       {/* ── Media ──────────────────────────────────────────────────────────── */}
-      <Link href={`/post/${post.id}`}>
-        <div className="relative w-full aspect-[4/5] bg-gray-100">
-          {post.media_type === 'video' ? (
-            <VideoPlayer
-              src={post.image_url}
-              className="w-full h-full"
-              duration={post.duration_seconds || undefined}
-            />
-          ) : (
-            <Image
-              src={post.image_url}
-              alt={post.caption}
-              fill
-              className="object-cover"
-            />
-          )}
-        </div>
-      </Link>
+      <div className="relative w-full aspect-[4/5] bg-gray-100" onDoubleClick={(e) => e.preventDefault()}>
+        {post.media_type === 'video' ? (
+          <VideoPlayer
+            src={post.image_url}
+            className="w-full h-full"
+            duration={post.duration_seconds || undefined}
+          />
+        ) : (
+          <Image
+            src={post.image_url}
+            alt={post.caption}
+            fill
+            className="object-cover"
+          />
+        )}
+      </div>
 
       {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div className="px-4 pt-3 pb-2">
