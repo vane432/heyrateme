@@ -272,7 +272,7 @@ export default function CritiqueCard({
     if (!cardRef.current) return;
     try {
       setIsDownloading(true);
-      const dataUrl = await htmlToImage.toWebp(cardRef.current, {
+      const dataUrl = await htmlToImage.toPng(cardRef.current, {
         quality: 0.9,
         pixelRatio: 2,
         skipFonts: true,
@@ -280,7 +280,7 @@ export default function CritiqueCard({
         allowTaint: true,
       } as any);
       const link = document.createElement('a');
-      link.download = `heyrate-${persona}-critique.webp`;
+      link.download = `heyrate-${persona}-critique.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {

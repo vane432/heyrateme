@@ -260,6 +260,8 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
         content: aiComment?.content || json.data.critique_body,
         created_at: aiComment?.created_at || new Date().toISOString(),
         users: { id: 'bot-id', username: aiComment?.username || persona, avatar_url: aiComment?.avatar_url || null } as any,
+        like_count: 0,
+        user_has_liked: false,
       };
 
       setComments(prev => [newComment, ...prev]);
