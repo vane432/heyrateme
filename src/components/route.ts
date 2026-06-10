@@ -1,118 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
-import { AI_PERSONAS, AIPersona, AIGeneratedCritique } from '@/lib/ai-personas';
+import { validateMediaSafety } from '@/lib/moderation';
 
 export async function POST(req: NextRequest) {
-  try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('Server missing GEMINI_API_KEY environment variable.');
-      return NextResponse.json(
-        { success: false, error: 'Server Configuration Error: Missing API Key' },
-        { status: 500 }
-      );
+    try {
+        const body = await req.json();
+        const {
+            userId,
+            imageUrl,
+            filePath,
+            caption,
+            category,
+            mediaType,
+            fileSizeBytes,
+            durationSeconds,
+            gender
+        } = body;
+
+        // 1. Fetch the uploaded file from Supabase Storage into server memory
+        // This safely bypasses the Next.js 4MB HTTP request body limit!
+        const fileRes = await fetch(imageUrl);
+        const arrayBuffer = await fileRes.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const mediaBase64 = buffer.toString('base64');
+        const mimeType = fileRes.headers.get('content-type') || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+        // 2. Run the server-side media moderation check
+        const isSafe = await validateMediaSafety(mediaBase64, mimeType);
+        if (!isSafe) {
+            // Delete the unsafe file from storage immediately
+            if (filePath) {
+                await supabaseAdmin.storage.from('posts').remove([filePath]);
+            }
+            return NextResponse.json(
+                { success: false, error: 'Media moderation failed. Content contains explicit or harmful material.' },
+                { status: 400 }
+            );
+        }
+
+        // 3. Create the post record in the database
+        const { data: post, error: postError } = await supabaseAdmin
+            .from('posts')
+            .insert({
+                user_id: userId,
+                image_url: imageUrl,
+                caption,
+                category,
+                media_type: mediaType,
+                duration_seconds: durationSeconds || null,
+                file_size_bytes: fileSizeBytes || null,
+                gender: gender || null
+            })
+            .select()
+            .single();
+
+        if (postError) throw postError;
+
+        return NextResponse.json({ success: true, data: post });
+
+    } catch (error: any) {
+        console.error('[API /posts/create] Error:', error);
+        return NextResponse.json(
+            { success: false, error: error.message || 'An unexpected error occurred.' },
+            { status: 500 }
+        );
     }
-
-    const ai = new GoogleGenAI({ apiKey });
-    const body = await req.json();
-    const { persona, imageBase64, mimeType, postId } = body;
-
-    if (!persona || !AI_PERSONAS[persona as AIPersona]) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid or missing persona selection.' },
-        { status: 400 }
-      );
-    }
-
-    if (!imageBase64) {
-      return NextResponse.json(
-        { success: false, error: 'Missing media data.' },
-        { status: 400 }
-      );
-    }
-
-    let cleanBase64 = imageBase64;
-    let finalMimeType = mimeType || 'image/jpeg';
-    if (imageBase64.startsWith('data:')) {
-      const [prefix, data] = imageBase64.split(',');
-      cleanBase64 = data;
-      finalMimeType = prefix.split(':')[1].split(';')[0];
-    }
-
-    const responseSchema = {
-      type: 'OBJECT',
-      properties: {
-        rating: { type: 'NUMBER' },
-        viral_punchline: { type: 'STRING' },
-        critique_body: { type: 'STRING' },
-      },
-      required: ['rating', 'viral_punchline', 'critique_body'],
-    };
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: "Analyze this outfit from the provided photo or video asset and deliver your critique based on the user's styling." },
-            {
-              inlineData: {
-                data: cleanBase64,
-                mimeType: finalMimeType,
-              },
-            },
-          ],
-        },
-      ],
-      config: {
-        systemInstruction: AI_PERSONAS[persona as AIPersona],
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0.8,
-      },
-    });
-
-    const critiqueText = response.text;
-    
-    if (!critiqueText) {
-      return NextResponse.json(
-        { success: false, error: 'AI generated an empty response asset.' },
-        { status: 500 }
-      );
-    }
-
-    const critiqueData: AIGeneratedCritique = JSON.parse(critiqueText);
-
-    let dbRecord = null;
-    
-    if (postId) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      const { data: rpcData, error: rpcError } = await supabase.rpc('insert_ai_critique', {
-        p_post_id: postId,
-        p_persona: persona,
-        p_style: critiqueData.style,
-        p_fit: critiqueData.fit,
-        p_color: critiqueData.color_harmony,
-        p_occasion: critiqueData.occasion_match,
-        p_comment: critiqueData.critique_body
-      });
-
-      if (rpcError) throw new Error('Database Insertion Error: ' + rpcError.message);
-      dbRecord = rpcData;
-    }
-
-    return NextResponse.json({ success: true, data: critiqueData, record: dbRecord });
-
-  } catch (error: any) {
-    console.error('Error generating AI critique:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
-  }
 }
