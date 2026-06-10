@@ -12,6 +12,7 @@ import TopPostsPreview from '@/components/landing/TopPostsPreview';
 import CTASection from '@/components/landing/CTASection';
 import Footer from '@/components/landing/Footer';
 import FeedView from '@/components/FeedView';
+import MobileLayoutShell from '@/components/MobileLayoutShell';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -41,7 +42,11 @@ export default function LandingPage() {
 
   // Logged-in user sees the feed
   if (isLoggedIn) {
-    return <FeedView />;
+    return (
+      <MobileLayoutShell forceRender>
+        <FeedView />
+      </MobileLayoutShell>
+    );
   }
 
   // Guest sees the landing page
@@ -58,4 +63,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
