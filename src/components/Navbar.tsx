@@ -20,7 +20,7 @@ export default function Navbar() {
       setUser(user);
       if (user) {
         supabase.from('users').select('username').eq('id', user.id).single().then(({ data }) => {
-          setUsername(data?.username ?? null);
+          setUsername((data as any)?.username ?? null);
         });
       }
     });
@@ -29,7 +29,7 @@ export default function Navbar() {
       setUser(session?.user ?? null);
       if (session?.user) {
         supabase.from('users').select('username').eq('id', session.user.id).single().then(({ data }) => {
-          setUsername(data?.username ?? null);
+          setUsername((data as any)?.username ?? null);
         });
       } else {
         setUsername(null);

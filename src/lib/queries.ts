@@ -471,7 +471,7 @@ export async function getTopCreators(limit = 10) {
   }, {});
 
   const creators = Object.values(userStats)
-    .filter((u: any) => u.postCount >= 3)
+    .filter((u: any) => u.user && u.user.username && u.postCount >= 3)
     .map((u: any) => ({
       user: u.user,
       postCount: u.postCount,

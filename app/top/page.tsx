@@ -148,34 +148,38 @@ export default function TopPage() {
           ) : (
             /* Top Creators View */
             <div className="space-y-1 mt-4">
-              {data.map((creator, i) => (
-                <Link key={creator.user.id} href={`/${creator.user.username}`} className="flex items-center gap-3 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 px-2 rounded-lg transition-colors">
-                  <span className="w-6 text-center text-sm font-bold text-gray-500 dark:text-zinc-500">{i + 1}</span>
-                  <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 bg-zinc-200 dark:bg-zinc-800">
-                    {creator.user.avatar_url ? (
-                      <Image src={creator.user.avatar_url} alt="" fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-                        {creator.user.username[0].toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate flex items-center gap-1">
-                      @{creator.user.username}
-                      {['vance', 'kiki', 'oracle'].includes(creator.user.username.toLowerCase()) && (
-                        <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-black">AI</span>
+              {data.map((creator, i) => {
+                if (!creator?.user?.username) return null; // Safe guard for invalid data
+                
+                return (
+                  <Link key={creator.user.id} href={`/${creator.user.username}`} className="flex items-center gap-3 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 px-2 rounded-lg transition-colors">
+                    <span className="w-6 text-center text-sm font-bold text-gray-500 dark:text-zinc-500">{i + 1}</span>
+                    <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 bg-zinc-200 dark:bg-zinc-800">
+                      {creator.user.avatar_url ? (
+                        <Image src={creator.user.avatar_url} alt="" fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+                          {creator.user.username[0].toUpperCase()}
+                        </div>
                       )}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                      avg {creator.averageRating.toFixed(1)}★ across {creator.postCount} posts
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-black text-[#FF385C] leading-none">{creator.averageRating.toFixed(1)}</p>
-                  </div>
-                </Link>
-              ))}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate flex items-center gap-1">
+                        @{creator.user.username}
+                        {['vance', 'kiki', 'oracle'].includes(creator.user.username.toLowerCase()) && (
+                          <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-black">AI</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                        avg {creator.averageRating.toFixed(1)}★ across {creator.postCount} posts
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-[#FF385C] leading-none">{creator.averageRating.toFixed(1)}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </>
