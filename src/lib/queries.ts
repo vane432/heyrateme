@@ -415,10 +415,19 @@ export async function getTopPosts(timeframe: 'today' | 'week' | 'month' | 'all_t
     })
   );
 
-  // Sort by score and take top N
-  return postsWithScores
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  // Sort by score
+  const sortedPosts = postsWithScores.sort((a, b) => b.score - a.score);
+
+  // Deduplicate by user (one best post per creator)
+  const seenUsers = new Set();
+  const deduplicated = sortedPosts.filter(post => {
+    if (!post.user_id) return false;
+    if (seenUsers.has(post.user_id)) return false;
+    seenUsers.add(post.user_id);
+    return true;
+  });
+
+  return deduplicated.slice(0, limit);
 }
 
 // Get top creators (users with >= 3 posts, ranked by average rating)
@@ -475,6 +484,7 @@ export async function getTopCreators(limit = 10) {
     .map((u: any) => ({
       user: u.user,
       postCount: u.postCount,
+      ratingCount: u.ratingCount,
       averageRating: u.ratingCount > 0 ? u.ratingSum / u.ratingCount : 0
     }))
     .sort((a: any, b: any) => b.averageRating - a.averageRating)
