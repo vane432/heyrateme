@@ -66,7 +66,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2 sm:gap-4 text-sm">
               {user ? (
                 <>
-                  <Link href="/top" className="hidden sm:block text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 font-medium">Top</Link>
+                  <Link href="/top" className="hidden sm:block text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 font-medium">Charts</Link>
 
                   {/* Notification Bell */}
                   <NotificationBell userId={user.id} />
