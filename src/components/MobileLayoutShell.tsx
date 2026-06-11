@@ -57,7 +57,9 @@ export default function MobileLayoutShell({ children, forceRender = false }: { c
 
           if (userCreated > cutoffDate && !data.is_pioneer) {
             // Keep them authenticated, but force them to the invite portal to finish.
-            window.location.href = '/invite?mode=complete';
+            if (!window.location.pathname.startsWith('/invite')) {
+              window.location.href = '/invite?mode=complete';
+            }
             return;
           }
 
@@ -68,8 +70,8 @@ export default function MobileLayoutShell({ children, forceRender = false }: { c
     fetchUser();
   }, []);
 
-  // Don't show app shell on landing page (unless forced by the authenticated hook) or auth routes
-  if (!forceRender && (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/login'))) {
+  // Don't show app shell on landing page (unless forced by the authenticated hook), auth routes, or invite page
+  if (!forceRender && (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/login') || pathname.startsWith('/invite'))) {
     return <>{children}</>;
   }
 
