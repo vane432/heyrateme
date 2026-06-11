@@ -266,9 +266,10 @@ export async function getPostsByUsername(username: string) {
     .from('users')
     .select('id')
     .eq('username', username)
-    .single();
+    .maybeSingle();
 
   if (userError) throw userError;
+  if (!user) return [];
 
   const { data: posts, error } = await supabase
     .from('posts')
@@ -325,9 +326,10 @@ export async function getUserProfile(username: string) {
     .from('users')
     .select('*')
     .eq('username', username)
-    .single();
+    .maybeSingle();
 
   if (userError) throw userError;
+  if (!user) return null;
 
   const posts = await getPostsByUsername(username);
 
