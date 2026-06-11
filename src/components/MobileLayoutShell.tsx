@@ -44,9 +44,25 @@ export default function MobileLayoutShell({ children, forceRender = false }: { c
         const { data } = await supabase
           .from('users')
           .select('username')
+          .select('username, created_at, is_pioneer')
           .eq('id', session.user.id)
           .single();
         if (data?.username) setUsername(data.username);
+
+        if (data) {
+          // Gatekeeper: Catch new OAuth signups who bypassed the invite page.
+          // Instead of signing them out, we treat this as a 2-step registration!
+          const cutoffDate = new Date('2024-03-01T00:00:00Z').getTime();
+          const userCreated = new Date(data.created_at).getTime();
+
+          if (userCreated > cutoffDate && !data.is_pioneer) {
+            // Keep them authenticated, but force them to the invite portal to finish.
+            window.location.href = '/invite?mode=complete';
+            return;
+          }
+
+          if (data.username) setUsername(data.username);
+        }
       }
     };
     fetchUser();

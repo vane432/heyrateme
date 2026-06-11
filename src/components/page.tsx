@@ -1,12 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function InvitePage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if the user is already authenticated but stuck at the gate
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) {
+        setSession(data.session);
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,18 +44,39 @@ export default function InvitePage() {
         return;
       }
 
-      // Store valid code in sessionStorage to use after OAuth callback
-      sessionStorage.setItem('invite_code', enteredCode);
-      
-      // Trigger Google OAuth sign in
-      const { error: signInError } = await supabase.auth.signInWithOAuth({ 
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
+      if (session?.user) {
+        // FLOW B: User signed up via /login, is authenticated, but needs the pioneer flag
+        await supabase
+          .from('invite_codes')
+          .update({ 
+            used_at: new Date().toISOString(),
+            used_by: session.user.id,
+            is_active: false
+          })
+          .eq('code', enteredCode)
+          .is('used_at', null);
 
-      if (signInError) throw signInError;
+        await supabase
+          .from('users')
+          .update({ 
+            is_pioneer: true,
+            invite_code_used: enteredCode
+          })
+          .eq('id', session.user.id);
+          
+        window.location.href = '/';
+      } else {
+        // FLOW A: Standard invite link flow (Guest)
+        sessionStorage.setItem('invite_code', enteredCode);
+        
+        const { error: signInError } = await supabase.auth.signInWithOAuth({ 
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`
+          }
+        });
+        if (signInError) throw signInError;
+      }
 
     } catch (err: any) {
       console.error('Invite validation error:', err);
@@ -64,8 +95,8 @@ export default function InvitePage() {
           </svg>
         </div>
 
-        <h1 className="text-2xl font-black text-gray-900 mb-2">You&apos;re invited</h1>
-        <p className="text-sm text-gray-500 mb-8">Enter your invite code to join the beta</p>
+        <h1 className="text-2xl font-black text-gray-900 mb-2">{session ? 'Almost there!' : "You're invited"}</h1>
+        <p className="text-sm text-gray-500 mb-8">{session ? 'Enter your invite code to complete your registration' : 'Enter your invite code to join the beta'}</p>
 
         <form onSubmit={handleSubmit} className="w-full">
           <input
@@ -86,9 +117,18 @@ export default function InvitePage() {
             disabled={isLoading}
             className="w-full bg-[#FF385C] text-white py-3.5 rounded-full font-bold hover:bg-[#E63250] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-[#FF385C]/30"
           >
-            {isLoading ? 'Verifying...' : 'Continue'}
+            {isLoading ? 'Verifying...' : session ? 'Complete Registration' : 'Continue with Google'}
           </button>
         </form>
+
+        {session && (
+          <button 
+            onClick={() => { supabase.auth.signOut(); window.location.href = '/login'; }} 
+            className="mt-5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Wrong account? Sign out
+          </button>
+        )}
       </div>
     </div>
   );

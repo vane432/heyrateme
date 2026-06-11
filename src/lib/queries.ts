@@ -77,7 +77,8 @@ export async function getSavedPosts(userId: string): Promise<PostWithUser[]> {
         users (
           id,
           username,
-          avatar_url
+          avatar_url,
+          is_pioneer
         )
       )
     `)
@@ -131,7 +132,8 @@ export async function getFeedPosts(category?: string, gender?: string, userId?: 
       users (
         id,
         username,
-        avatar_url
+        avatar_url,
+        is_pioneer
       )
     `)
     .order('created_at', { ascending: false });
@@ -214,7 +216,8 @@ export async function getPostById(postId: string, userId?: string) {
       users (
         id,
         username,
-        avatar_url
+        avatar_url,
+        is_pioneer
       )
     `)
     .eq('id', postId)
@@ -274,7 +277,8 @@ export async function getPostsByUsername(username: string) {
       users (
         id,
         username,
-        avatar_url
+        avatar_url,
+        is_pioneer
       )
     `)
     .eq('user_id', user.id)
@@ -363,7 +367,8 @@ export async function getTopPosts(timeframe: 'today' | 'week' | 'month' | 'all_t
       users (
         id,
         username,
-        avatar_url
+        avatar_url,
+        is_pioneer
       )
     `)
 
@@ -441,7 +446,8 @@ export async function getTopCreators(limit = 10) {
         id,
         username,
         avatar_url,
-        created_at
+        created_at,
+        is_pioneer
       )
     `);
 

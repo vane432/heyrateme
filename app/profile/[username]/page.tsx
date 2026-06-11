@@ -333,6 +333,11 @@ export default function ProfilePage() {
               <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
                 {profile.user.display_name || `@${profile.user.username}`}
               </h1>
+              {profile.user.is_pioneer && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm" title="Pioneer Member">
+                  ★ Pioneer
+                </span>
+              )}
               {isAI && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm" title="Official AI Critic">
                   AI 🤖

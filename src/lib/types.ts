@@ -22,6 +22,8 @@ export interface Database {
           tiktok: string | null
           twitter: string | null
           website: string | null
+          is_pioneer: boolean | null
+          invite_code_used: string | null
           created_at: string
         }
         Insert: {
@@ -36,6 +38,8 @@ export interface Database {
           tiktok?: string | null
           twitter?: string | null
           website?: string | null
+          is_pioneer?: boolean | null
+          invite_code_used?: string | null
           created_at?: string
         }
         Update: {
@@ -50,6 +54,8 @@ export interface Database {
           tiktok?: string | null
           twitter?: string | null
           website?: string | null
+          is_pioneer?: boolean | null
+          invite_code_used?: string | null
           created_at?: string
         }
       }

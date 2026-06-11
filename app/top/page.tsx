@@ -140,7 +140,12 @@ export default function TopPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">@{post.users.username}</p>
+                          <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate flex items-center gap-1">
+                            @{post.users.username}
+                            {post.users.is_pioneer && (
+                              <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded-full font-black">★ Pioneer</span>
+                            )}
+                          </p>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{post.category}</p>
                         </div>
                         <div className="flex flex-col items-end">
@@ -217,7 +222,10 @@ function PodiumCard({ post, rank, isWinner }: { post: any, rank: number, isWinne
       </div>
       
       <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between gap-1">
-        <p className="text-white text-[10px] font-bold truncate opacity-90">@{post.users.username}</p>
+        <p className="text-white text-[10px] font-bold truncate opacity-90 flex items-center gap-1">
+          @{post.users.username}
+          {post.users.is_pioneer && <span className="text-yellow-400" title="Pioneer">★</span>}
+        </p>
         <p className="text-[#FF385C] text-sm font-black leading-none drop-shadow-md shrink-0">{post.average_rating.toFixed(1)}</p>
       </div>
     </Link>
