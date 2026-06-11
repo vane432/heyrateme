@@ -15,6 +15,32 @@ export default function MobileLayoutShell({ children, forceRender = false }: { c
     const fetchUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        // Check if user came from an invite code flow
+        const inviteCode = sessionStorage.getItem('invite_code');
+        if (inviteCode) {
+          // Mark code as used (add safety check against race conditions)
+          await supabase
+            .from('invite_codes')
+            .update({ 
+              used_at: new Date().toISOString(),
+              used_by: session.user.id,
+              is_active: false
+            })
+            .eq('code', inviteCode)
+            .is('used_at', null); 
+
+          // Set user as pioneer
+          await supabase
+            .from('users')
+            .update({ 
+              is_pioneer: true,
+              invite_code_used: inviteCode
+            })
+            .eq('id', session.user.id);
+
+          sessionStorage.removeItem('invite_code');
+        }
+
         const { data } = await supabase
           .from('users')
           .select('username')
