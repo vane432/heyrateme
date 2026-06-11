@@ -354,12 +354,9 @@ export async function getUserProfile(username: string) {
   };
 }
 
-// Get top posts for today
-export async function getTopPosts() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const { data: posts, error } = await supabase
+// Get top posts (configurable timeframe)
+export async function getTopPosts(timeframe: 'today' | 'week' | 'month' | 'all_time' = 'today', limit = 10) {
+  let query = supabase
     .from('posts')
     .select(`
       *,
@@ -369,7 +366,16 @@ export async function getTopPosts() {
         avatar_url
       )
     `)
-    .gte('created_at', today.toISOString());
+
+  if (timeframe !== 'all_time') {
+    const date = new Date();
+    if (timeframe === 'today') date.setHours(0, 0, 0, 0);
+    else if (timeframe === 'week') date.setDate(date.getDate() - 7);
+    else if (timeframe === 'month') date.setMonth(date.getMonth() - 1);
+    query = query.gte('created_at', date.toISOString());
+  }
+
+  const { data: posts, error } = await query;
 
   if (error) throw error;
 
@@ -409,10 +415,72 @@ export async function getTopPosts() {
     })
   );
 
-  // Sort by score and take top 5
+  // Sort by score and take top N
   return postsWithScores
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .slice(0, limit);
+}
+
+// Get top creators (users with >= 3 posts, ranked by average rating)
+export async function getTopCreators(limit = 10) {
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      user_id,
+      users (
+        id,
+        username,
+        avatar_url,
+        created_at
+      )
+    `);
+
+  if (error) throw error;
+
+  const { data: ratings } = await supabase
+    .from('ratings')
+    .select('post_id, rating');
+
+  const ratingsByPost = (ratings || []).reduce((acc: any, r) => {
+    if (!acc[r.post_id]) acc[r.post_id] = { sum: 0, count: 0 };
+    acc[r.post_id].sum += r.rating;
+    acc[r.post_id].count += 1;
+    return acc;
+  }, {});
+
+  const userStats = (posts || []).reduce((acc: any, post: any) => {
+    const userId = post.user_id;
+    if (!acc[userId]) {
+      acc[userId] = {
+        user: post.users,
+        postCount: 0,
+        ratingSum: 0,
+        ratingCount: 0,
+      };
+    }
+    acc[userId].postCount += 1;
+    
+    const postRatings = ratingsByPost[post.id];
+    if (postRatings) {
+      acc[userId].ratingSum += postRatings.sum;
+      acc[userId].ratingCount += postRatings.count;
+    }
+    
+    return acc;
+  }, {});
+
+  const creators = Object.values(userStats)
+    .filter((u: any) => u.postCount >= 3)
+    .map((u: any) => ({
+      user: u.user,
+      postCount: u.postCount,
+      averageRating: u.ratingCount > 0 ? u.ratingSum / u.ratingCount : 0
+    }))
+    .sort((a: any, b: any) => b.averageRating - a.averageRating)
+    .slice(0, limit);
+
+  return creators;
 }
 
 // Check if user has exceeded daily post limit (3 posts per 24 hours)
