@@ -52,7 +52,8 @@ export default function MobileLayoutShell({ children, forceRender = false }: { c
         if (data) {
           // Gatekeeper: Catch new OAuth signups who bypassed the invite page.
           // Instead of signing them out, we treat this as a 2-step registration!
-          const cutoffDate = new Date('2024-03-01T00:00:00Z').getTime();
+          // NOTE: Set this to the exact date/time you deployed the invite feature!
+          const cutoffDate = new Date('2024-05-26T00:00:00Z').getTime();
           const userCreated = new Date(data.created_at).getTime();
 
           if (userCreated > cutoffDate && !data.is_pioneer) {
