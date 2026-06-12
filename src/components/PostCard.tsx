@@ -563,7 +563,7 @@ export default function PostCard({ post, userId, onRatingUpdate }: PostCardProps
       )}
 
       {generatedCritique && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 pt-10 pb-4 overflow-y-auto backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/90 px-4 py-8 overflow-y-auto backdrop-blur-sm">
           <div className="relative w-full max-w-sm flex flex-col items-center">
             <CritiqueCard {...generatedCritique} onClose={() => setGeneratedCritique(null)} />
           </div>
