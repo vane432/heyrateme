@@ -60,7 +60,7 @@ function VanceCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Crit
       {/* Full-bleed image with bottom vignette */}
       <div className="relative w-full flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -142,7 +142,7 @@ function KikiCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Criti
       {/* Floating image with thick border */}
       <div className="relative mx-4 mt-2 rounded-3xl overflow-hidden" style={{ border: '4px solid rgba(255,255,255,0.9)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', aspectRatio: '4/5' }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -219,7 +219,7 @@ function OracleCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Cri
       {/* Full-width image — museum exhibit style */}
       <div className="w-full flex-1 overflow-hidden" style={{ borderTop: '1px solid #e5e5e5', borderBottom: '1px solid #e5e5e5', minHeight: 0 }}>
         {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
@@ -252,6 +252,43 @@ function OracleCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Cri
   );
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Capture a single frame from a video element as a base64 PNG data URL
+function captureVideoFrame(videoEl: HTMLVideoElement): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = videoEl.videoWidth || 640;
+  canvas.height = videoEl.videoHeight || 1136;
+  const ctx = canvas.getContext('2d');
+  ctx?.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/png');
+}
+
+// Fetch an external image and convert to base64 to avoid canvas taint
+async function toBase64(url: string): Promise<string> {
+  const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ─── Save to Photos on iOS ────────────────────────────────────────────────────
+// iOS Safari/Chrome won't save to the Camera Roll via <a download>.
+// The only reliable cross-platform approach is to open the image in a new
+// tab — on iOS the user can then long-press → "Add to Photos".
+// On Android/desktop the direct download still works fine.
+function isIOS(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !(window as any).MSStream
+  );
+}
+
 // ─── Main Export ──────────────────────────────────────────────────────────────
 export default function CritiqueCard({
   persona,
@@ -263,26 +300,93 @@ export default function CritiqueCard({
 }: CritiqueCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showIOSHint, setShowIOSHint] = useState(false);
+  // Pre-resolved base64 image — loaded eagerly to avoid canvas taint at export time
+  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
+  const [imageReady, setImageReady] = useState(false);
 
   const isVideo = Boolean(
     imageUrl.match(/\.(mp4|webm|mov|quicktime)$/i) || imageUrl.startsWith('data:video/')
   );
 
+  // ── Pre-load image as base64 as soon as the card mounts ──────────────────
+  // This runs once on mount so the image is ready before the user taps download
+  useState(() => {
+    if (!isVideo && imageUrl && !imageUrl.startsWith('data:')) {
+      toBase64(imageUrl)
+        .then(b64 => {
+          setResolvedImageUrl(b64);
+          setImageReady(true);
+        })
+        .catch(() => setImageReady(true)); // fall back gracefully
+    } else {
+      setImageReady(true);
+    }
+  });
+
   const handleDownload = async () => {
     if (!cardRef.current) return;
     try {
       setIsDownloading(true);
+
+      // ── Videos: capture current frame ────────────────────────────────────
+      if (isVideo) {
+        const videoEl = cardRef.current.querySelector('video');
+        if (videoEl) {
+          const frameDataUrl = captureVideoFrame(videoEl);
+          setResolvedImageUrl(frameDataUrl);
+          await new Promise(r => setTimeout(r, 150));
+        }
+      } else if (!resolvedImageUrl) {
+        // Fallback: if pre-load didn't finish, fetch now
+        const b64 = await toBase64(imageUrl);
+        setResolvedImageUrl(b64);
+        await new Promise(r => setTimeout(r, 150));
+      }
+
+      // Give React time to re-render with base64 image before capture
+      await new Promise(r => setTimeout(r, 100));
+
       const dataUrl = await htmlToImage.toPng(cardRef.current, {
-        quality: 0.9,
-        pixelRatio: 2,
-        skipFonts: true,
-        cacheBust: true,
-        allowTaint: true,
-      } as any);
-      const link = document.createElement('a');
-      link.download = `heyrate-${persona}-critique.png`;
-      link.href = dataUrl;
-      link.click();
+        quality: 1.0,
+        pixelRatio: 3,
+        fetchRequestInit: { mode: 'cors', cache: 'no-cache' },
+      });
+
+      if (isIOS()) {
+        // ── iOS: open in new tab so user can save to Photos ───────────────
+        const newTab = window.open();
+        if (newTab) {
+          newTab.document.write(`
+            <html>
+              <head>
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>Save to Photos</title>
+                <style>
+                  body { margin: 0; background: #000; display: flex; flex-direction: column;
+                         align-items: center; justify-content: center; min-height: 100vh; }
+                  img { max-width: 100%; border-radius: 16px; }
+                  p { color: white; font-family: -apple-system, sans-serif; font-size: 14px;
+                      text-align: center; margin-top: 16px; opacity: 0.7; padding: 0 20px; }
+                </style>
+              </head>
+              <body>
+                <img src="${dataUrl}" alt="Hey Rate Me critique card" />
+                <p>Press and hold the image, then tap "Add to Photos" to save to your gallery</p>
+              </body>
+            </html>
+          `);
+          newTab.document.close();
+        }
+        setShowIOSHint(true);
+        setTimeout(() => setShowIOSHint(false), 4000);
+      } else {
+        // ── Android / Desktop: direct download ───────────────────────────
+        const link = document.createElement('a');
+        link.download = `heyrate-${persona}-critique.png`;
+        link.href = dataUrl;
+        link.click();
+      }
     } catch (err) {
       console.error('Failed to generate image download:', err);
     } finally {
@@ -290,14 +394,14 @@ export default function CritiqueCard({
     }
   };
 
-  // Per-persona download button style
-  const downloadBtn = {
-    vance:  { background: '#080808', color: 'white', border: '1px solid #ffffff20' },
-    kiki:   { background: 'linear-gradient(135deg, #FF3CAC, #784BA0)', color: 'white', border: 'none' },
-    oracle: { background: 'transparent', color: '#111', border: '1px solid #111' },
-  }[persona];
-
-  const cardProps = { imageUrl, rating, punchline, critique, isVideo };
+  // Use resolved base64 URL if available, else original
+  const cardProps = {
+    imageUrl: resolvedImageUrl || imageUrl,
+    rating,
+    punchline,
+    critique,
+    isVideo: isVideo && !resolvedImageUrl,
+  };
 
   return (
     <div className="w-full relative flex flex-col items-center gap-6 p-4 pt-10">
@@ -316,17 +420,45 @@ export default function CritiqueCard({
         {persona === 'oracle' && <OracleCard {...cardProps} />}
       </div>
 
+      {/* iOS hint message */}
+      {showIOSHint && (
+        <div className="w-full max-w-[380px] bg-black/80 text-white text-xs text-center 
+                        px-4 py-3 rounded-xl backdrop-blur-sm">
+          Press and hold the image in the new tab, then tap "Add to Photos" 📸
+        </div>
+      )}
+
+      {/* ── Download button — always coral so it's visible on any background ── */}
       <button
         onClick={handleDownload}
         disabled={isDownloading}
-        style={{ ...downloadBtn, borderRadius: 999, padding: '12px 28px', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: isDownloading ? 0.5 : 1, transition: 'opacity 0.2s' }}
+        className="flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm
+                   text-white transition-all active:scale-95 disabled:opacity-50
+                   shadow-lg shadow-[#FF385C]/30"
+        style={{
+          background: 'linear-gradient(135deg, #FF385C, #FF7043)',
+          minWidth: 200,
+          justifyContent: 'center',
+        }}
       >
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        {isDownloading ? 'Downloading...' : 'Download to Share'}
+        {isDownloading ? (
+          <>
+            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+            Preparing...
+          </>
+        ) : (
+          <>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {isIOS() ? 'Save to Photos' : 'Download to Share'}
+          </>
+        )}
       </button>
     </div>
   );
 }
-
