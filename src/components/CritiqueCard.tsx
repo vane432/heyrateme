@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
 
 export interface CritiqueCardProps {
@@ -28,7 +28,7 @@ function BrandFooter({ theme }: { theme: 'vance' | 'kiki' | 'oracle' }) {
     <div className={styles[theme]}>
       <div className="flex items-center gap-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="heyrate.me" crossOrigin="anonymous" className="h-5 w-auto object-contain opacity-80" />
+        <img src="/logo.png" alt="heyrate.me" className="h-5 w-auto object-contain opacity-80" />
         <span className={textStyles[theme]}>heyrate.me</span>
       </div>
       <span className={textStyles[theme]}>#heyrateme</span>
@@ -63,7 +63,7 @@ function VanceCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Crit
           <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <img src={imageUrl} alt="Post" crossOrigin={imageUrl.startsWith('data:') ? undefined : "anonymous"} className="w-full h-full object-cover" />
         )}
         {/* Vignette overlay */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, #080808 100%)' }} />
@@ -145,7 +145,7 @@ function KikiCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Criti
           <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <img src={imageUrl} alt="Post" crossOrigin={imageUrl.startsWith('data:') ? undefined : "anonymous"} className="w-full h-full object-cover" />
         )}
         {/* Rotated rating badge */}
         <div className="absolute top-3 right-3 flex items-center justify-center"
@@ -222,7 +222,7 @@ function OracleCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<Cri
           <video src={imageUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
+          <img src={imageUrl} alt="Post" crossOrigin={imageUrl.startsWith('data:') ? undefined : "anonymous"} className="w-full h-full object-cover" />
         )}
       </div>
 
@@ -311,7 +311,7 @@ export default function CritiqueCard({
 
   // ── Pre-load image as base64 as soon as the card mounts ──────────────────
   // This runs once on mount so the image is ready before the user taps download
-  useState(() => {
+  useEffect(() => {
     if (!isVideo && imageUrl && !imageUrl.startsWith('data:')) {
       toBase64(imageUrl)
         .then(b64 => {
@@ -322,7 +322,7 @@ export default function CritiqueCard({
     } else {
       setImageReady(true);
     }
-  });
+  }, [imageUrl, isVideo]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
