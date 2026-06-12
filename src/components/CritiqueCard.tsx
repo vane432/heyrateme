@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 import * as htmlToImage from 'html-to-image';
 
 export interface CritiqueCardProps {
@@ -12,247 +12,6 @@ export interface CritiqueCardProps {
   onClose?: () => void;
 }
 
-// ─── Branding Footer (shared, adapts per theme) ───────────────────────────────
-function BrandFooter({ theme }: { theme: 'vance' | 'kiki' | 'oracle' }) {
-  const styles = {
-    vance: 'flex items-center justify-between px-5 py-3 border-t border-white/10',
-    kiki:  'flex items-center justify-between px-5 py-3',
-    oracle:'flex items-center justify-between px-6 py-4 border-t border-gray-100',
-  };
-  const textStyles = {
-    vance:  'text-white/40 text-[10px] tracking-[0.2em] uppercase font-mono',
-    kiki:   'text-white/60 text-[10px] tracking-[0.15em] uppercase font-bold',
-    oracle: 'text-gray-400 text-[10px] tracking-[0.2em] uppercase',
-  };
-  return (
-    <div className={styles[theme]}>
-      <div className="flex items-center gap-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="heyrate.me" crossOrigin="anonymous" className="h-5 w-auto object-contain opacity-80" />
-        <span className={textStyles[theme]}>heyrate.me</span>
-      </div>
-      <span className={textStyles[theme]}>#heyrateme</span>
-    </div>
-  );
-}
-
-// ─── VANCE CARD ───────────────────────────────────────────────────────────────
-// Aesthetic: Cold editorial. Dazed magazine meets film credits.
-function VanceCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<CritiqueCardProps, 'persona' | 'onClose'> & { isVideo: boolean }) {
-  return (
-    <div
-      className="relative flex flex-col w-full max-w-[380px] overflow-hidden rounded-2xl"
-      style={{ aspectRatio: '9/16', background: '#080808', fontFamily: "'Inter', sans-serif" }}
-    >
-      {/* Cold blue accent line */}
-      <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #00BFFF 40%, transparent)', opacity: 0.7 }} />
-
-      {/* Persona stamp */}
-      <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-        <span style={{ fontSize: 10, letterSpacing: '0.35em', color: '#00BFFF', textTransform: 'uppercase', fontWeight: 700 }}>
-          VANCE
-        </span>
-        <span style={{ fontSize: 9, letterSpacing: '0.2em', color: '#ffffff30', textTransform: 'uppercase' }}>
-          The Sarcastic Elitist
-        </span>
-      </div>
-
-      {/* Full-bleed image with bottom vignette */}
-      <div className="relative w-full flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-        {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
-        )}
-        {/* Vignette overlay */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, #080808 100%)' }} />
-
-        {/* Huge rating number over vignette */}
-        <div className="absolute bottom-4 left-5 flex items-end gap-1.5">
-          <span style={{ fontSize: 80, fontWeight: 800, lineHeight: 1, color: '#ffffff', letterSpacing: '-4px' }}>
-            {rating.toFixed(1)}
-          </span>
-          <span style={{ fontSize: 14, color: '#ffffff60', marginBottom: 14, letterSpacing: '0.05em' }}>/&thinsp;5</span>
-        </div>
-
-        {/* Punchline over vignette */}
-        <div className="absolute bottom-20 left-5 right-5">
-          <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, color: '#ffffffcc', lineHeight: 1.4 }}>
-            &ldquo;{punchline}&rdquo;
-          </p>
-        </div>
-      </div>
-
-      {/* Critique text */}
-      <div className="px-5 pt-4 pb-3">
-        <p style={{ fontFamily: "'Courier New', monospace", fontSize: 11, color: '#9ca3af', lineHeight: 1.7, letterSpacing: '0.02em' }}>
-          {critique}
-        </p>
-      </div>
-
-      <BrandFooter theme="vance" />
-    </div>
-  );
-}
-
-// ─── KIKI CARD ────────────────────────────────────────────────────────────────
-// Aesthetic: Loud Gen-Z chaos. i-D magazine meets concert poster.
-function KikiCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<CritiqueCardProps, 'persona' | 'onClose'> & { isVideo: boolean }) {
-  const getEmojis = (r: number) => {
-    if (r >= 4) return ['🔥', '💅', '✨'];
-    if (r >= 2.5) return ['🤔', '✨', '😅'];
-    return ['💀', '😬', '🫠'];
-  };
-  const emojis = getEmojis(rating);
-
-  return (
-    <div
-      className="relative flex flex-col w-full max-w-[380px] overflow-hidden rounded-2xl"
-      style={{
-        aspectRatio: '9/16',
-        background: 'linear-gradient(135deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%)',
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
-      {/* Background noise / star pattern */}
-      <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.07 }}>
-        {[...Array(18)].map((_, i) => (
-          <span key={i} style={{
-            position: 'absolute',
-            left: `${(i * 37 + 10) % 90}%`,
-            top: `${(i * 53 + 5) % 90}%`,
-            fontSize: i % 3 === 0 ? 28 : 16,
-            color: 'white',
-            transform: `rotate(${i * 22}deg)`,
-          }}>★</span>
-        ))}
-      </div>
-
-      {/* Persona stamp */}
-      <div className="px-5 pt-5 pb-1">
-        <span style={{ fontSize: 11, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', fontWeight: 900 }}>
-          KIKI ★
-        </span>
-        <span style={{ fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginLeft: 8 }}>
-          Chaos Hype-Beast
-        </span>
-      </div>
-
-      {/* Floating image with thick border */}
-      <div className="relative mx-4 mt-2 rounded-3xl overflow-hidden" style={{ border: '4px solid rgba(255,255,255,0.9)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', aspectRatio: '4/5' }}>
-        {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
-        )}
-        {/* Rotated rating badge */}
-        <div className="absolute top-3 right-3 flex items-center justify-center"
-          style={{ width: 64, height: 64, borderRadius: '50%', background: 'white', transform: 'rotate(12deg)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-          <div className="text-center">
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#FF3CAC', lineHeight: 1 }}>{rating.toFixed(1)}</div>
-            <div style={{ fontSize: 8, fontWeight: 700, color: '#784BA0', letterSpacing: '0.05em' }}>/ 5.0</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Punchline */}
-      <div className="px-5 pt-4">
-        <p style={{ fontSize: 20, fontWeight: 900, color: 'white', textTransform: 'uppercase', lineHeight: 1.15, letterSpacing: '-0.5px', wordBreak: 'break-word' }}>
-          {punchline}
-        </p>
-      </div>
-
-      {/* Emoji row */}
-      <div className="px-5 pt-2 flex gap-2">
-        {emojis.map((e, i) => <span key={i} style={{ fontSize: 22 }}>{e}</span>)}
-      </div>
-
-      {/* Critique */}
-      <div className="px-5 pt-2 flex-1">
-        <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6 }}>
-          {critique}
-        </p>
-      </div>
-
-      <BrandFooter theme="kiki" />
-    </div>
-  );
-}
-
-// ─── ORACLE CARD ──────────────────────────────────────────────────────────────
-// Aesthetic: Luxury minimal. Vogue meets museum exhibit label.
-function OracleCard({ imageUrl, rating, punchline, critique, isVideo }: Omit<CritiqueCardProps, 'persona' | 'onClose'> & { isVideo: boolean }) {
-  const stars = Array.from({ length: 5 }, (_, i) => i < Math.round(rating));
-
-  return (
-    <div
-      className="relative flex flex-col w-full max-w-[380px] overflow-hidden rounded-2xl"
-      style={{ aspectRatio: '9/16', background: '#FAFAF8', fontFamily: "'Georgia', serif" }}
-    >
-      {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <span style={{
-          fontSize: 120,
-          fontWeight: 900,
-          color: '#00000008',
-          transform: 'rotate(-30deg)',
-          whiteSpace: 'nowrap',
-          letterSpacing: '-4px',
-          userSelect: 'none',
-        }}>
-          ORACLE
-        </span>
-      </div>
-
-      {/* Persona stamp — centered */}
-      <div className="pt-6 pb-4 text-center">
-        <div style={{ fontSize: 9, letterSpacing: '0.4em', color: '#9ca3af', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
-          THE ORACLE
-        </div>
-        <div style={{ fontSize: 8, letterSpacing: '0.25em', color: '#d1d5db', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif", marginTop: 3 }}>
-          Fashion Psychoanalyst
-        </div>
-      </div>
-
-      {/* Full-width image — museum exhibit style */}
-      <div className="w-full flex-1 overflow-hidden" style={{ borderTop: '1px solid #e5e5e5', borderBottom: '1px solid #e5e5e5', minHeight: 0 }}>
-        {isVideo ? (
-          <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Post" crossOrigin="anonymous" className="w-full h-full object-cover" />
-        )}
-      </div>
-
-      {/* Star rating — centered */}
-      <div className="flex justify-center gap-1.5 pt-5">
-        {stars.map((filled, i) => (
-          <span key={i} style={{ fontSize: 18, color: filled ? '#111' : '#e5e5e5' }}>★</span>
-        ))}
-      </div>
-
-      {/* Punchline — centered serif */}
-      <div className="px-8 pt-3 text-center">
-        <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 16, color: '#1a1a1a', lineHeight: 1.5 }}>
-          — {punchline} —
-        </p>
-      </div>
-
-      {/* Critique — centered light */}
-      <div className="px-8 pt-3 pb-2 text-center flex-shrink-0">
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 300, color: '#6b7280', lineHeight: 1.75 }}>
-          {critique}
-        </p>
-      </div>
-
-      <BrandFooter theme="oracle" />
-    </div>
-  );
-}
-
-// ─── Main Export ──────────────────────────────────────────────────────────────
 export default function CritiqueCard({
   persona,
   imageUrl,
@@ -264,23 +23,60 @@ export default function CritiqueCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const isVideo = Boolean(
-    imageUrl.match(/\.(mp4|webm|mov|quicktime)$/i) || imageUrl.startsWith('data:video/')
-  );
+  const isVideo = imageUrl.match(/\.(mp4|webm|mov|quicktime)$/i) || imageUrl.startsWith('data:video/');
+
+  const themes = {
+    vance: {
+      wrapper: 'bg-gradient-to-b from-[#0F0F12] via-[#050507] to-black text-white border border-zinc-800 shadow-2xl rounded-3xl',
+      header: 'text-zinc-500 uppercase tracking-[0.3em] text-[10px] font-black',
+      imageContainer: 'border border-zinc-800 rounded-2xl bg-black p-1',
+      ratingBadge: 'bg-zinc-900 border border-zinc-700 text-white font-mono font-bold rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)]',
+      punchline: 'text-red-500 font-black tracking-tight text-xl leading-tight uppercase border-l-4 border-red-500 pl-3',
+      critique: 'text-zinc-300 text-sm leading-relaxed font-normal tracking-wide',
+      footer: 'border-t border-zinc-900',
+      hashtag: 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+    },
+    kiki: {
+      wrapper: 'bg-gradient-to-br from-[#FF3B96] via-[#9146FF] to-[#00F0FF] text-white shadow-2xl rounded-3xl',
+      header: 'text-yellow-300 font-black tracking-widest text-[11px] uppercase drop-shadow',
+      imageContainer: 'border-2 border-white/40 rounded-2xl shadow-inner',
+      ratingBadge: 'bg-yellow-300 text-black font-black rounded-full shadow-md rotate-[-2deg]',
+      punchline: 'text-white font-black tracking-wide text-2xl uppercase italic drop-shadow-md',
+      critique: 'text-white font-bold text-sm leading-snug drop-shadow-sm',
+      footer: 'border-t border-white/20',
+      hashtag: 'bg-black/30 text-white'
+    },
+    oracle: {
+      wrapper: 'bg-gradient-to-b from-[#FAF8F5] to-[#F3EDE2] text-[#1C1C1C] border border-[#DCD6CD] shadow-2xl rounded-3xl',
+      header: 'text-[#8A8477] tracking-[0.3em] uppercase text-[10px] font-bold',
+      imageContainer: 'border border-[#DCD6CD] rounded-2xl bg-white p-1.5 shadow-sm',
+      ratingBadge: 'bg-[#1C1C1C] text-[#FAF8F5] font-serif tracking-widest text-xs font-semibold rounded-md shadow-md',
+      punchline: 'text-[#1C1C1C] font-serif text-xl italic font-semibold leading-snug text-center px-2 border-y border-[#DCD6CD]/60 py-2',
+      critique: 'text-[#4A4A4A] text-sm leading-relaxed font-serif text-center px-1',
+      footer: 'border-t border-[#DCD6CD]',
+      hashtag: 'bg-[#1C1C1C]/5 text-[#1C1C1C] border border-[#1C1C1C]/10'
+    },
+  };
+
+  const theme = themes[persona];
+
+  const displayNames = {
+    vance: 'VANCE (THE SARCASTIC ELITIST)',
+    kiki: 'KIKI (THE CHAOS HYPE-BEAST)',
+    oracle: 'THE ORACLE (FASHION PSYCHOANALYST)',
+  };
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
     try {
       setIsDownloading(true);
-      const dataUrl = await htmlToImage.toPng(cardRef.current, {
-        quality: 0.9,
+      const dataUrl = await htmlToImage.toWebp(cardRef.current, {
+        quality: 0.95,
         pixelRatio: 2,
         skipFonts: true,
-        cacheBust: true,
-        allowTaint: true,
-      } as any);
+      });
       const link = document.createElement('a');
-      link.download = `heyrate-${persona}-critique.png`;
+      link.download = `heyrate-${persona}-critique.webp`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -290,41 +86,74 @@ export default function CritiqueCard({
     }
   };
 
-  // Per-persona download button style
-  const downloadBtn = {
-    vance:  { background: '#080808', color: 'white', border: '1px solid #ffffff20' },
-    kiki:   { background: 'linear-gradient(135deg, #FF3CAC, #784BA0)', color: 'white', border: 'none' },
-    oracle: { background: 'transparent', color: '#111', border: '1px solid #111' },
-  }[persona];
-
-  const cardProps = { imageUrl, rating, punchline, critique, isVideo };
-
   return (
-    <div className="w-full relative flex flex-col items-center gap-6 p-4 pt-10">
+    <div className="w-full relative flex flex-col items-center gap-4 p-4 pt-12">
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-0 right-2 text-white/70 hover:text-white transition-all font-bold tracking-widest uppercase text-xs p-2 hover:scale-105 z-50 flex items-center gap-1.5"
+          className="absolute top-2 right-4 text-white/50 hover:text-white transition-all font-semibold uppercase text-xs p-2 z-50 flex items-center gap-1"
         >
           ✕ Close
         </button>
       )}
 
-      <div ref={cardRef} className="w-full flex justify-center">
-        {persona === 'vance'  && <VanceCard  {...cardProps} />}
-        {persona === 'kiki'   && <KikiCard   {...cardProps} />}
-        {persona === 'oracle' && <OracleCard {...cardProps} />}
+      {/* Main Container Shell */}
+      <div
+        ref={cardRef}
+        className={`relative flex flex-col w-full max-w-[370px] min-h-[660px] p-5 justify-between box-border ${theme.wrapper}`}
+      >
+        {/* Style Report Header */}
+        <div className="w-full text-center pb-3">
+          <span className={theme.header}>STYLE REPORT // {displayNames[persona]}</span>
+        </div>
+
+        {/* Unified Outfit Preview Frame - Force-loaded on ALL personas */}
+        <div className={`relative w-full aspect-[1/1] overflow-hidden flex-shrink-0 mb-4 ${theme.imageContainer}`}>
+          {isVideo ? (
+            <video src={imageUrl} autoPlay loop muted playsInline crossOrigin="anonymous" className="w-full h-full object-cover" />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="Outfit Preview" crossOrigin="anonymous" className="w-full h-full object-cover" />
+          )}
+          
+          {/* Rating Numerical Badge Layer */}
+          <div className="absolute bottom-3 right-3 shadow-xl z-20">
+            <div className={`px-4 py-1.5 inline-flex items-center gap-0.5 font-bold text-sm ${theme.ratingBadge}`}>
+              <span>{rating.toFixed(1)}</span>
+              <span className="text-[10px] opacity-60 font-medium">/5.0 ★</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Structured Critique Copy Area */}
+        <div className="flex flex-col gap-4 flex-1 pb-4 justify-center">
+          <h2 className={theme.punchline}>&quot;{punchline}&quot;</h2>
+          <p className={theme.critique}>{critique}</p>
+        </div>
+
+        {/* Global Unified Logo Footer */}
+        <div className={`pt-4 flex items-center justify-between ${theme.footer}`}>
+          <div className="flex items-center gap-2 font-black tracking-tight text-xs uppercase opacity-90">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="logo" className="h-5 w-5 object-contain rounded bg-white" crossOrigin="anonymous" />
+            <span className={persona === 'oracle' ? 'text-[#1C1C1C]' : 'text-white'}>heyrate.me</span>
+          </div>
+          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${theme.hashtag}`}>
+            #heyrateme
+          </span>
+        </div>
       </div>
 
+      {/* Share Exporter Button */}
       <button
         onClick={handleDownload}
         disabled={isDownloading}
-        style={{ ...downloadBtn, borderRadius: 999, padding: '12px 28px', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', opacity: isDownloading ? 0.5 : 1, transition: 'opacity 0.2s' }}
+        className="flex items-center gap-2 px-6 py-2.5 bg-white text-black hover:bg-white/90 disabled:opacity-50 transition-all shadow-xl font-bold rounded-xl text-sm"
       >
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        {isDownloading ? 'Downloading...' : 'Download to Share'}
+        {isDownloading ? 'Generating WebP...' : 'Download Card'}
       </button>
     </div>
   );
