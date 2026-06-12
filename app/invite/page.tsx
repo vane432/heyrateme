@@ -28,7 +28,7 @@ export default function InvitePage() {
         .single();
 
       // Valid if: found, is_active = true, used_at = null
-      if (fetchError || !data || !data.is_active || data.used_at) {
+      if (fetchError || !data || !(data as any).is_active || (data as any).used_at) {
         setError('Invalid or already used invite code');
         setIsLoading(false);
         return;
